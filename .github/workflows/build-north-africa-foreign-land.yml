@@ -1,4 +1,4 @@
-name: Build Mediterranean foreign landmasks
+name: Build regional geographic landmasks
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - 'tools/build_north_africa_foreign_mask.py'
       - 'tools/build_suez_foreign_mask.py'
       - 'tools/build_france_foreign_mask.py'
+      - 'tools/build_beijing_landmask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -42,6 +43,7 @@ jobs:
           python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_suez_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_france_foreign_mask.py /tmp/north-africa-countries.geojson
+          python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -81,16 +83,27 @@ jobs:
               throw Error('France foreign land/naval check '+JSON.stringify({side,foreignOffmap,illegalShips:illegalShips.length}));
             console.log('FRANCE_FOREIGN_LAND '+JSON.stringify({side,offmap:foreignOffmap,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const beijing=E.scenarios.byId['eu-cf-beijing'];
+          for(const side of beijing.sides){
+            const g=beijing.create(side,'normal',20261022);
+            const sea=g.tiles.filter(t=>t.terrain==='sea').length;
+            const coast=g.tiles.filter(t=>t.terrain==='coast').length;
+            const ships=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            if(sea<2500||coast<40||ships.length)
+              throw Error('Beijing geographic shoreline check '+JSON.stringify({side,sea,coast,ships:ships.length}));
+            console.log('BEIJING_GEOGRAPHIC_SHORE '+JSON.stringify({side,sea,coast,ports:g.stations.filter(s=>s.portAt).length}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Use audited foreign country masks for North Africa, Suez and France"
+            git commit -m "Reclassify Bohai shoreline from sampled geographic land mask"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
