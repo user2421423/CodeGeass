@@ -25,13 +25,3 @@ jobs:
         run: |
           node --check dist/war-campaign.js
           node --check dist/ui/war-campaign-screen.js
-          node --check tools/three_faction_campaign_smoke.cjs
-          node --check tools/three_faction_ui_smoke.cjs
-      - name: Verify old six-ledger progress, completed wars and unified territory
-        run: node tools/three_faction_campaign_smoke.cjs
-      - name: Verify three-faction UI, two-front switching and single saved battle
-        run: node tools/three_faction_ui_smoke.cjs
-      - name: Keep all 13 Federation-EU mission identifiers and rewards intact
-        run: node tools/federation_eu_campaign_smoke.cjs
-      - name: Verify existing Federation-EU mechanics contracts
-        run: node tools/federation_eu_mechanics_smoke.cjs

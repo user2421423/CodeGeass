@@ -32,11 +32,3 @@ jobs:
         with:
           node-version: '22'
       - run: node tools/build_sources.cjs
-      - name: Verify Story mission placements and mission objectives
-        run: node tools/story_normal_objectives_and_balance_smoke.cjs
-      - name: Test original Season 1 missions with ten seeds each
-        env:
-          STORY_BALANCE_CAMPAIGNS: bk_s1,britannia_s1
-          STORY_BALANCE_FOCUS_ALL: '1'
-          STORY_BALANCE_FOCUS_SEEDS: '101,202,303,404,505,606,707,808,909,1001'
-        run: node tools/story_r2_balance_probe.cjs

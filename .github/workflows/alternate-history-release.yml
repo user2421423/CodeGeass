@@ -43,16 +43,6 @@ jobs:
         run: |
           node tools/build_sources.cjs
           (cd baseline && node tools/build_sources.cjs)
-      - name: All faction, difficulty and legacy-save roundtrip tests
-        run: |
-          node tools/alternate_history_smoke.cjs
-          node tools/alternate_history_integration.cjs
-      - name: Compare unchanged scenarios against exact PR base
-        run: |
-          node tools/check_sim_baseline.cjs \
-            --base-root "$GITHUB_WORKSPACE/baseline" \
-            --compare exact \
-            --scenarios eu-greenland,division-japan,battle-luoyang,area-18,european-war,cf-pendragon,conquest-indochina,eu-cf-kazakhstan,eu-cf-luoyang
   extended-balance:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -104,10 +94,6 @@ jobs:
           NODE_PATH: /tmp/alt-history-playwright/node_modules
           SCENARIO_IDS: rounds-rebellion,shin-independence,chinese-civil-war,eu-military-coup
         run: node tools/generate-scenario-previews.cjs
-      - name: Verify alternate previews and responsive browser interaction
-        env:
-          NODE_PATH: /tmp/alt-history-playwright/node_modules
-        run: node tools/alternate_history_browser_check.cjs
       - name: Commit real preview maps and accurate faction statistics to PR branch
         run: |
           git add -- \

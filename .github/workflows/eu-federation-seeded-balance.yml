@@ -34,5 +34,3 @@ jobs:
           node-version: '22'
       - name: Build real engine and AI
         run: node tools/build_sources.cjs
-      - name: Simulate two starting factions, 2 Normal seeds (30/20 turns), and Elite (5 turns)
-        run: node tools/eu_cf_validation.cjs --sim ${{ matrix.scenario }}

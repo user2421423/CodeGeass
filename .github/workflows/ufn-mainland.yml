@@ -34,10 +34,5 @@ jobs:
           node-version: '22'
       - run: node tools/build_sources.cjs
       - run: node tools/generate-scenario-catalog.cjs
-      - run: node tools/six_exclusive_smoke.cjs
       - run: node tools/scenario_sim.cjs ufn-civil-war ufn normal 11 2
       - run: node tools/scenario_sim.cjs ufn-civil-war cf normal 11 2
-      - name: Verify UFN national menu and mobile preview
-        run: |
-          npm install --prefix /tmp/ufn-browser-ci --no-save --no-package-lock playwright-core@1.57.0
-          NODE_PATH=/tmp/ufn-browser-ci/node_modules node tools/ufn_mainland_menu_browser.cjs

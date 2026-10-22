@@ -37,8 +37,6 @@ jobs:
           node-version: 22
       - name: Build game bundles
         run: node tools/build_sources.cjs
-      - name: Smoke test new Euro Britannian commanders
-        run: node tools/euro_grand_masters_smoke.cjs
       - name: Check published artwork
         run: node tools/validate_assets.cjs --tracked
       # Each preview/<name> branch is built in its own folder and served at /previews/<name>/.

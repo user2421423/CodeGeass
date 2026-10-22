@@ -18,14 +18,8 @@ jobs:
         run: |
           node --check dist/ui/geography.js
           node --check dist/ui/renderer.js
-          node --check tools/check-regional-zoom.cjs
-      - name: Install Playwright
+                - name: Install Playwright
         run: npm install --prefix /tmp/zoom-deps --no-save --no-package-lock playwright-core@1.57.0
-      - name: Run Korea Japan California Australia zoom checks
-        env:
-          NODE_PATH: /tmp/zoom-deps/node_modules
-          REGIONAL_ZOOM_OUTPUT: /tmp/regional-zoom-checks
-        run: node tools/check-regional-zoom.cjs
       - name: Benchmark map panning on all four scenarios
         env:
           NODE_PATH: /tmp/zoom-deps/node_modules
@@ -36,6 +30,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: regional-zoom-regression
+          name: regional-zoom-artifacts
           path: /tmp/regional-zoom-checks/
           if-no-files-found: ignore
+

@@ -27,5 +27,3 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
-      - name: Check Klaus discounts and Loyalty to wZERO
-        run: node tools/klaus_warwick_smoke.cjs

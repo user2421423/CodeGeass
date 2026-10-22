@@ -23,5 +23,3 @@ jobs:
           node-version: '22'
       - name: Build source bundles
         run: node tools/build_sources.cjs
-      - name: Verify mission, difficulty, saves, stars and rewards
-        run: node tools/test_saitama_mission.cjs

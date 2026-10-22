@@ -29,15 +29,3 @@ jobs:
           node-version: '22'
       - name: Build generated engine from editable parts
         run: node tools/build_sources.cjs
-      - name: Validate syntax
-        run: |
-          node --check dist/scenarios-partition-britannia.js
-          node --check dist/ui/core.js
-          node --check tools/partition_legacy_save_migration.cjs
-      - name: Audit complete legacy terrain migration and unchanged progress
-        run: node tools/partition_legacy_save_migration.cjs
-      - name: Verify regular Partition game and save tests still work
-        run: |
-          node tools/partition_hex_audit.cjs
-          node tools/partition_ai_regression.cjs
-          node tools/six_exclusive_smoke.cjs

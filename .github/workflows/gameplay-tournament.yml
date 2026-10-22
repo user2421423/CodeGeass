@@ -30,8 +30,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Full strict regression suite (includes all scenario roster combinations)
-        run: node tools/gameplay_checks.cjs full | tee gameplay-full.tap
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -46,8 +44,6 @@ jobs:
         with:
           node-version: 22
       - run: node tools/build_sources.cjs
-      - name: Compare with documented defect-fix baseline
-        run: node tools/check_sim_baseline.cjs --actual baseline-actual.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

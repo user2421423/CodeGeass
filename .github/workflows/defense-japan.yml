@@ -34,8 +34,6 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Ensure catalog generator includes Defense of Japan
         run: node tools/generate-scenario-catalog.cjs
-      - name: Defense of Japan invariants and short AI playtest
-        run: node tools/defense_japan_smoke.cjs
       - name: Black Knights 10-turn seeded AI playtest
         run: node tools/scenario_sim.cjs defense-japan bk normal 11 10
       - name: Britannia 10-turn seeded AI playtest

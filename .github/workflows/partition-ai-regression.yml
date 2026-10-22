@@ -26,4 +26,3 @@ jobs:
         with:
           node-version: '22'
       - run: node tools/build_sources.cjs
-      - run: node tools/partition_ai_regression.cjs

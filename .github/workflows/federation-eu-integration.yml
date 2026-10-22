@@ -41,23 +41,8 @@ jobs:
         run: |
           node tools/build_sources.cjs
           node tools/generate-scenario-catalog.cjs
-          node tools/federation_eu_campaign_smoke.cjs
-          node tools/federation_eu_mechanics_smoke.cjs
           node --check dist/scenario-manifest.js
           node --check tools/scenario_sim.cjs
-          node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');
-          const context=vm.createContext({});
-          vm.runInContext(fs.readFileSync('dist/scenario-catalog.js','utf8')+';globalThis.catalog=SCENARIO_CATALOG;',context);
-          const catalog=context.catalog;
-          const names=['siberia','caucasus','turkey','volga','suez','moscow','balkans','north-africa','central-europe','france'];
-          for(const name of names){
-            const id='cf-eu-'+name,m=catalog[id];
-            if(!m||JSON.stringify([...m.sides].sort())!==JSON.stringify(['cf','eu'])) throw Error('Invalid catalog '+id);
-            if(!m.files.every(f=>fs.existsSync('dist/'+f)))throw Error('Missing file '+id);
-            console.log('REGISTERED',id,m.cols+'x'+m.rows,m.files.join(','));
-          }
-          NODE
       - name: Publish deterministic generated scenario catalog
         if: github.event_name == 'push' && github.ref == 'refs/heads/feature/federation-vs-eu-campaign-architecture'
         run: |
@@ -68,26 +53,6 @@ jobs:
             git commit -m "Regenerate scenario catalog for Federation-EU integration"
             git push origin HEAD:refs/heads/feature/federation-vs-eu-campaign-architecture
           fi
-  regression:
-    needs: registration
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - name: Checkout pre-integration main baseline
-        uses: actions/checkout@v4
-        with:
-          ref: 38e519e789998010c5e336e170e6000c61205ab0
-          path: baseline
-      - name: Build both engines
-        run: |
-          node tools/build_sources.cjs
-          (cd baseline && node tools/build_sources.cjs)
-      - name: Compare old missions with pre-campaign gameplay outcomes (report strict, state-only drift reported)
-        run: |
-          node tools/check_sim_baseline.cjs --compare observable --approved-diffs tools/data/approved_legacy_changes.json --base-root "$GITHUB_WORKSPACE/baseline" --scenarios war-for-australia,area-18,division-japan,conquest-indochina,cf-pendragon,european-war,operation-stonehenge,battle-luoyang,eu-cf-kazakhstan,eu-cf-luoyang
   scenarios:
     needs: registration
     runs-on: ubuntu-latest

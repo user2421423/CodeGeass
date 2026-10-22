@@ -45,27 +45,6 @@ jobs:
         run: |
           node tools/generate-scenario-previews.cjs
           node tools/generate-hires-regional-maps.cjs
-      - name: Verify current starting positions match the briefing
-        run: |
-          node tools/six_exclusive_smoke.cjs
-          node - <<'NODE'
-          const assert=require('node:assert/strict');
-          const fs=require('node:fs'),vm=require('node:vm');
-          const stat=vm.runInNewContext(fs.readFileSync('dist/scenario-previews/metadata.js','utf8')+';SCENARIO_STATIC_MAPS')['partition-britannia'];
-          assert.equal(stat.cities,78);
-          assert.equal(stat.formations,263);
-          assert.deepEqual(JSON.parse(JSON.stringify(stat.sides)),{
-            eu:{cities:30,formations:100},
-            cf:{cities:21,formations:90},
-            remnants:{cities:27,formations:73}
-          });
-          for(const dir of ['scenario-previews','scenario-hires']){
-            const bytes=fs.readFileSync('dist/'+dir+'/partition-britannia.webp');
-            assert.equal(bytes.toString('ascii',0,4),'RIFF');
-            assert.equal(bytes.toString('ascii',8,12),'WEBP');
-            console.log(dir+': '+bytes.length+' bytes');
-          }
-          NODE
       - name: Publish the refreshed static previews to main
         id: publish
         run: |

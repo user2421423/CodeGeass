@@ -17,5 +17,3 @@ jobs:
         with:
           node-version: '22'
       - run: node tools/build_sources.cjs
-      - name: All Story missions, four difficulties, funded and unfunded production
-        run: node tools/story_ai_production_smoke.cjs

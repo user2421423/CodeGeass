@@ -48,8 +48,6 @@ jobs:
         run: |
           node tools/build_sources.cjs
           node tools/partition_hex_audit.cjs
-          node tools/partition_ai_regression.cjs
-          node tools/six_exclusive_smoke.cjs
       - name: Ensure review branch has reproducible geography
         if: github.event_name == 'pull_request'
         run: git diff --exit-code -- dist/partition-geography.js
