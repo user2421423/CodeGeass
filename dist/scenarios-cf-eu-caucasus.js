@@ -69,17 +69,14 @@ function interpolate(lat,shore){
   }
   return shore[shore.length-1][1];
 }
-function basin(lon,lat){
-  if(lat>=37.05&&lat<=46.65&&lon>interpolate(lat,CASPIAN_SHORE))return 'caspian';
-  if(lat>=40.5&&lat<=45.1&&lon<interpolate(lat,BLACK_SEA_SHORE))return 'black-sea';
-  return null;
-}
+// Distinct natural-water footprints, computed from actual Black Sea/Azov land
+// coastline and Caspian lake polygons. See tools/build_caucasus_watermask.py.
+const CAUCASUS_WATER_COUNTS=atob('');
 function waterAt(c,r){
-  let n=0;for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){
-    const p=geo(c+x*.34,r+y*.34);
-    if(basin(p.lon,p.lat))n++;
-  }
-  return n/9;
+  const packed=CAUCASUS_WATER_COUNTS.charCodeAt(r*COLS+c);
+  const caspian=packed>>4,black=packed&15;
+  return {fraction:(caspian+black)/9,
+    basin:black>=caspian&&black?'black-sea':caspian?'caspian':null};
 }
 function lineDistance(p,line){
   let best=Infinity;
@@ -129,16 +126,16 @@ function create(player='cf',difficulty='normal',seed=201705){
     eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
       E.ELITE_FORCES[id].availableTo.includes(s))]));
   g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
-    const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=waterAt(c,r);
+    const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),water=waterAt(c,r),fraction=water.fraction;
     return {c,r,owner:null,terrain:fraction>=.8?'sea':
       fraction>=.2?'coast':landscape(p,c,r),waterFraction:fraction,
-      waterBasin:basin(p.lon,p.lat)};
+      waterBasin:water.basin};
   });
   // Every naval port must directly touch a sea tile in its own real basin.
   const basinForPort=name=>['Batumi','Poti','Sochi','Tuapse','Novorossiysk'].includes(name)
     ?'black-sea':'caspian';
   const navigable=(t,name)=>t&&t.terrain==='sea'&&
-    basin(geo(t.c,t.r).lon,geo(t.c,t.r).lat)===basinForPort(name);
+    t.waterBasin===basinForPort(name);
   for(const [name,lon,lat,owner,tier,fort] of CITIES){
     const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
     const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
