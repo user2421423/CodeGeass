@@ -37,6 +37,8 @@ jobs:
           node-version: 22
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Check carrier, airship and sea-transport turn rules
+        run: node tools/transport_turn_rules_test.cjs
       - name: Check published artwork
         run: node tools/validate_assets.cjs --tracked
       # Each preview/<name> branch is built in its own folder and served at /previews/<name>/.
