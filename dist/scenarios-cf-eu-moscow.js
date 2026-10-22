@@ -405,7 +405,7 @@
         map(([type,n])=>[type,Math.max(0,Math.round(n)-current[type])]));
       const income=E.income(g,side);
       for(const resource of Object.keys(desired))
-        g.economy[side][resource]=income[resource]*2;
+        g.economy[side][resource]=({"cf":{"credits":2000,"industry":500,"science":230},"eu":{"credits":1820,"industry":500,"science":220}}[side]||{})[resource] ?? (income[resource]*2);
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       g.units.filter(u=>u.side!==player&&!E.TYPES[u.type]?.naval).
