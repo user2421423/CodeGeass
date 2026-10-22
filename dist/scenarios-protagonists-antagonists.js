@@ -4,6 +4,7 @@ const E=root.Knightmare||(typeof require==='function'?require('./engine.js'):nul
 const define=root.KNIGHTMARE_EXCLUSIVE?.define||(typeof require==='function'?require('./scenarios-exclusive-common.js').define:null);
 
 const config={
+  treasury:{"protagonists":{"credits":1814,"industry":500,"science":360,"sakuradite":147},"antagonists":{"credits":1089,"industry":500,"science":207,"sakuradite":93}},
   "id": "protagonists-antagonists",
   "title": "Protagonists vs Antagonists",
   "parent": "european-war",
