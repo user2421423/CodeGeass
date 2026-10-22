@@ -582,6 +582,9 @@
         }
         s.nationalCapital=isNationalCapital(g,s);
         s.capital=s.nationalCapital;
+        // Regional HQs retain their strategic role but cannot give capital
+        // conquest honors or national-capital economic/defensive bonuses.
+        if(!s.nationalCapital)s.capitalOf=null;
       }else s.nationalCapital=!!s.capital;
       delete s.regionalIncome;
       delete s.divisionIncome;
