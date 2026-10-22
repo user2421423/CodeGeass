@@ -304,15 +304,18 @@
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       const mixed=!!(coast.charCodeAt(i>>3)&(128>>(i&7)));
+      const foreign=foreignKoreaAt(c,r);
       if(mixed&&!land)throw Error('Korean coast outside land mask');
-      return {c,r,owner:null,terrain:land?(mixed?'coast':landscape(p)):foreignKoreaAt(c,r)?'offmap':'sea'};
+      // A GSHHS physical-land footprint can straddle Korea's Chinese/Russian
+      // political border; excluded countries override all physical terrain.
+      return {c,r,owner:null,terrain:foreign?'offmap':land?(mixed?'coast':landscape(p)):'sea'};
     });
     // Landmask boundaries come from 37-point geographic sampling; the
     // coastline is never guessed by proximity to a city's port.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       const port=Object.prototype.hasOwnProperty.call(PORTS,name);
       const t=nearest(g,locate(lon,lat),v=>v.terrain!=='sea'&&
-        !E.stationAt(g,v)&&(!port||E.adjacent(g,v).some(n=>n.terrain==='sea')),13);
+        !E.TERRAIN[v.terrain]?.blocked&&!E.stationAt(g,v)&&(!port||E.adjacent(g,v).some(n=>n.terrain==='sea')),13);
       if(!t)throw Error('No Korean or Japanese city location: '+name);
       const capital=name==='Seoul'||name==='Pyongyang'||name==='Fukuoka';
       const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
@@ -378,7 +381,7 @@
       const base=g.stations.find(s=>s.name===name&&s.owner===side);
       if(!base)throw Error('Invalid Army Group staging: '+name);
       for(let i=0;i<count;i++){
-        const at=nearest(g,base,t=>t.terrain!=='sea'&&t.owner===side&&
+        const at=nearest(g,base,t=>t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked&&t.owner===side&&
           !E.unitAt(g,t)&&!E.stationAt(g,t),13);
         if(!at)throw Error('No ground deployment area at '+name);
         const cmd=i===0?commander:null;
