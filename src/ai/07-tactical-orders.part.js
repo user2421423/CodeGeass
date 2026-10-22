@@ -440,6 +440,7 @@
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
       // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
       const naval = !!TYPES[u.type].naval,
+        atSeaTransport = !naval && atSea(g, u),
         fromLand = !naval && !atSea(g, u),
         freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
         landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= aiRange(g).convoyLand).length,
@@ -514,9 +515,18 @@
           sc -= danger * 20;
         } else if (isSea(p)) {
           sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+          // A sea transport must spend a turn sailing to a staging hex beside
+          // a legal beach; only on its following turn may it move onto land.
+          if (atSeaTransport && fieldAt(p) <= currentField && adjacent(g, p).some(n =>
+            !isSea(n) && !TERRAIN[n.terrain]?.blocked && !unitAt(g, n) &&
+            (!stationAt(g, n) || !foe(g, stationAt(g, n).owner, u.side) || stationAt(g, n).shield <= 0)))
+            sc += 24;
           if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
         } else if (!fromLand) {
           sc += naval ? 30 : 90;
+          // Once a transport starts adjacent to its objective's shore, prefer
+          // taking that now-legal one-hex landing instead of sailing past it.
+          if (atSeaTransport && fieldAt(p) <= currentField) sc += 35;
         } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
           const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= aiRange(g).convoyLand).length;
           sc += 28 + Math.min(3, assembling) * 12;
