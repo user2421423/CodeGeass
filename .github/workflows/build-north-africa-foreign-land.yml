@@ -40,9 +40,6 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error \
             https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
             -o /tmp/natural-earth-land.geojson
-          curl --fail --location --retry 3 --silent --show-error \
-            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_lakes.geojson \
-            -o /tmp/natural-earth-lakes.geojson
       - name: Rasterize foreign land into North Africa, Suez and France
         run: |
           python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
@@ -50,7 +47,7 @@ jobs:
           python3 tools/build_france_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
           python3 tools/build_korea_foreign_mask.py /tmp/north-africa-countries.geojson
-          python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson /tmp/natural-earth-lakes.geojson
+          python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
