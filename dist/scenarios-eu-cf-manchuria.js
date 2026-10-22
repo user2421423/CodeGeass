@@ -9,6 +9,14 @@
   const K=Math.cos(45.5*Math.PI/180);
   const PROJECTION={centerLon:121,centerLat:45.5,angle:0,
     uMin:-16*K,uMax:16*K,vMin:-8,vMax:8};
+  // Sampled 1:50m Russian/Sea of Japan coastline north of 43.5N.
+  // Regenerate with tools/build_manchuria_north_coast.py; all other areas
+  // keep the existing regional land, island and strait masks.
+  const MANCHURIA_NORTH_LAND_COUNTS=atob('');
+  const manchuriaNorthDry=index=>{
+    const byte=MANCHURIA_NORTH_LAND_COUNTS.charCodeAt(index>>1);
+    return (index&1)?(byte&15):(byte>>4);
+  };
   // [city, longitude, latitude, owner, production tier, fortified]
   const CITIES=[["Ulaanbaatar",106.91,47.92,"eu",3,true],["Choibalsan",114.54,48.07,"eu",3,true],["Sainshand",110.12,44.89,"eu",2,false],["Chita",113.5,52.03,"eu",3,true],["Borzya",116.52,50.39,"eu",3,true],["Zabaykalsk",117.33,49.65,"eu",2,true],["Blagoveshchensk",127.53,50.28,"eu",3,true],["Belogorsk",128.47,50.92,"eu",2,false],["Birobidzhan",132.93,48.8,"eu",3,true],["Khabarovsk",135.07,48.48,"eu",3,true],["Manzhouli",117.38,49.59,"cf",3,true],["Hailar",119.76,49.21,"cf",3,true],["Yakeshi",120.73,49.29,"cf",2,true],["Genhe",121.52,50.78,"cf",2,false],["Arxan",119.94,47.18,"cf",2,true],["Qiqihar",123.92,47.35,"cf",3,true],["Daqing",125.03,46.59,"cf",3,true],["Harbin",126.63,45.75,"cf",3,true],["Suihua",126.99,46.63,"cf",2,true],["Yichun",128.9,47.73,"cf",2,true],["Heihe",127.5,50.25,"cf",2,true],["Jiamusi",130.32,46.8,"cf",3,true],["Hegang",130.3,47.35,"cf",2,true],["Shuangyashan",131.16,46.65,"cf",2,true],["Fuyuan",134.28,48.36,"cf",2,true],["Jixi",130.97,45.3,"cf",2,true],["Hulin",132.98,45.8,"cf",2,false],["Mudanjiang",129.63,44.55,"cf",3,true],["Suifenhe",131.15,44.4,"cf",2,true],["Yanji",129.5,42.9,"cf",2,true],["Hunchun",130.36,42.86,"cf",2,true],["Changchun",125.32,43.82,"cf",3,true],["Jilin",126.55,43.84,"cf",3,true],["Siping",124.35,43.17,"cf",2,true],["Liaoyuan",125.14,42.89,"cf",2,false],["Tonghua",125.94,41.73,"cf",2,true],["Baishan",126.42,41.94,"cf",2,true],["Tieling",123.84,42.29,"cf",2,true],["Fushun",123.92,41.87,"cf",2,true],["Shenyang",123.43,41.8,"cf",3,true],["Anshan",122.99,41.12,"cf",3,true],["Benxi",123.77,41.3,"cf",2,true],["Liaoyang",123.2,41.27,"cf",2,true],["Panjin",122.07,41.12,"cf",2,false],["Yingkou",122.24,40.66,"cf",3,true],["Jinzhou",121.13,41.1,"cf",2,true],["Huludao",120.84,40.71,"cf",2,true],["Dalian",121.61,38.91,"cf",3,true],["Dandong",124.39,40.13,"cf",3,true]];
   // [side, staging city, class, separate formations, lead named commander]
@@ -124,8 +132,10 @@
       dy=(BOUNDS.north-BOUNDS.south)/ROWS;
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);let dry=0;
-      // 25 interior samples; coast is genuinely mixed (20-80% land).
-      for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)
+      // True Sea of Japan cells north of 43.5 N are not dry land.
+      // Elsewhere retain the established 25-sample mixed-coast method.
+      if(p.lon>=130&&p.lat>=43.5)dry=Math.round(manchuriaNorthDry(i)*25/9);
+      else for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)
         if(landAt(p.lon+x*dx/5,p.lat+y*dy/5))dry++;
       return {c,r,owner:null,terrain:dry<5?'sea':
         dry<=20?'coast':landscape(p,c,r)};
