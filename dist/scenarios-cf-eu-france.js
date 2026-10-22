@@ -43,6 +43,13 @@
   const CORSICA=[[8.54,43.01],[8.83,42.98],[9.45,42.7],
     [9.48,42.31],[9.36,41.89],[9.22,41.38],[8.8,41.37],
     [8.6,41.6],[8.68,42.08],[8.58,42.47],[8.54,43.01]];
+  // Foreign British, Spanish and Italian land at the Channel and coastal edges is
+  // impassable background, not open water. Raster built from Natural Earth.
+  const FOREIGN_FRANCE_LAND=atob('');
+  const foreignFranceAt=(c,r)=>{
+    const index=r*COLS+c;
+    return !!(FOREIGN_FRANCE_LAND.charCodeAt(index>>3)&(128>>(index&7)));
+  };
   const CITIES=[
     ['Paris',2.35,48.86,3,true],['Lille',3.06,50.63,3,true],
     ['Dunkirk',2.38,51.05,2,true],['Calais',1.86,50.95,2,true],
@@ -233,7 +240,7 @@
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),
         land=contains(p,MAINLAND)||contains(p,CORSICA),
-        kind=land?terrain(p,c,r):openWater(p)?'sea':'offmap';
+        kind=land?terrain(p,c,r):foreignFranceAt(c,r)?'offmap':openWater(p)?'sea':'offmap';
       return {c,r,owner:null,terrain:kind};
     });
     // The coast is represented by walkable coastal land next to actual water.
