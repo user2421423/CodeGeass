@@ -130,7 +130,6 @@ jobs:
             const g=manchuria.create(side,'normal',20261022);
             let water=0,coast=0;
             for(const t of g.tiles){
-              const p=manchuria.bounds ? null : null;
               if(t.c>120&&t.r<70&&t.terrain==='sea')water++;
               if(t.c>120&&t.r<70&&t.terrain==='coast')coast++;
             }
