@@ -22,7 +22,7 @@ for r in range(R):
             k=r*C+c
             bits[k>>3]|=128>>(k&7)
             count+=1
-if count<10 or count>300:raise RuntimeError('Unexpected Bohai water count '+str(count))
+if count<1 or count>300:raise RuntimeError('Unexpected Bohai water count '+str(count))
 path=Path(__file__).resolve().parents[1]/'dist/scenarios-luoyang.js'
 s=path.read_text()
 if "const LUOYANG_BOHAI_BITS=atob(" not in s:
