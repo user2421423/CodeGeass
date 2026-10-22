@@ -378,6 +378,123 @@ function hostileUnit(u) {
 function readyUnit(u) {
   return !!u && u.side === game.player && interactive() && hasOrders(u);
 }
+// Hearts of Iron-style map counters are deliberately limited to strategic zoom.
+// The tactical formation art, hover/selection logic and saved unit data are unchanged.
+// HOI4-inspired strategic division tiles. The only identifying graphic is
+// the actual faction flag: no unit class, commander pip, strength or numbers.
+function strategicFlagAspect(side) {
+  if (side === 'bk') return 1;
+  if (side === 'britannia' || side === 'remnants') return 157 / 260;
+  if (side === 'eb') return 116 / 175;
+  if (side === 'eu' || side === 'cf') return 173 / 260;
+  if (side === 'ufn') return 594 / 831;
+  return 2 / 3;
+}
+
+function drawStrategicDivisionCounter(u, scale, selected) {
+  // A small circular badge at strategic zoom, with ONLY the authentic
+  // faction flag inside. Screen-space sizing is stable while panning/zooming.
+  ctx.save();
+  ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
+  const diameter = scale < 0.12 ? 14 : scale < 0.22 ? 16 : 19;
+  const radius = diameter / 2;
+
+  const allied = u.side !== game.player && u.side !== 'neutral' &&
+    !E.foe(game, game.player, u.side);
+  const base = u.side === game.player ? '#455641'
+    : allied ? '#43505a' : u.side === 'neutral' ? '#4e4d40' : '#39413f';
+  // Match the game's cached ready-unit state, but only glow when movement
+  // or the normal attack action remains. Repair-only/other orders do not glow.
+  const actionReady = readyUnit(u) && (!u.moved || !u.attacked);
+
+  // Flat circular silhouette: no counter rectangles, type symbols, stars,
+  // numbers or HP rings. A faint halo identifies units with orders left.
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 0.8, 0, Math.PI * 2);
+  ctx.fillStyle = '#101820';
+  if (actionReady) {
+    ctx.shadowColor = 'rgba(255, 213, 120, 0.48)';
+    ctx.shadowBlur = 5;
+  }
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = base;
+  ctx.fill();
+
+  const side = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
+    ? 'ufn' : artSide(u.side);
+  // Contain the complete flag inside the circular token. This avoids
+  // cropping off the Chinese flag's stars or the Britannian standard's crest.
+  const maxWidth = diameter - 3.5;
+  const maxHeight = diameter - 3.5;
+  const aspect = strategicFlagAspect(side); // source flag height / width
+  const width = Math.min(maxWidth, maxHeight / aspect);
+  const height = width * aspect;
+  const x = -width / 2, y = -height / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
+  ctx.clip();
+  // City flag drawing also paints a pole. A second clip removes the pole,
+  // retaining only the actual flag fabric inside the circle.
+  ctx.beginPath();
+  ctx.rect(x, y, width, height);
+  ctx.clip();
+  const painted = ART.drawFlag(ctx, side, x, y, width);
+  if (!painted) {
+    // The neutral/unsupported flag fallback remains inside the badge.
+    ctx.fillStyle = game.factions?.[u.side]?.color ||
+      E.FACTIONS[u.side]?.color || PLATE[artSide(u.side)]?.mid || '#858984';
+    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = '#cbd1c4';
+    ctx.fillRect(x, y + height * 0.45, width, height * 0.12);
+  }
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
+  ctx.strokeStyle = selected ? '#ffe4a3' : actionReady ? '#e4bf79' : '#9ba8a8';
+  ctx.lineWidth = selected ? 1.35 : actionReady ? 1 : 0.8;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// At every strategic zoom level, draw one counter per living formation.
+// Do not merge, cull or aggregate nearby same-faction formations: crowded
+// front lines are intentionally allowed to overlap for this preview.
+// Only the normal viewport check and world-wrap copies still apply.
+function drawStrategicOverviewFlags(units, scale, copies, visible, selection, selectedIds) {
+  const selected = [];
+  for (const u of units) {
+    const pos = animatedPosition(u);
+    if (!visible(pos)) continue;
+    const chosen = (selection?.kind === 'unit' && selection.id === u.id) ||
+      selectedIds.has(u.id);
+    const entries = chosen ? selected : null;
+    for (const x of copies(pos.x)) {
+      if (entries) {
+        // Draw selected formations on top so they are not obscured in crowds.
+        entries.push({ u, x, y: pos.y });
+      } else {
+        ctx.save();
+        ctx.translate(x, pos.y);
+        drawStrategicDivisionCounter(u, scale, false);
+        ctx.restore();
+      }
+    }
+  }
+  for (const item of selected) {
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    drawStrategicDivisionCounter(item.u, scale, true);
+    ctx.restore();
+  }
+}
+
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
   const c = PLATE[artSide(side)],
