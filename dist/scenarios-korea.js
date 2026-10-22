@@ -10,6 +10,14 @@
   const K=Math.cos(37.25*Math.PI/180);
   const PROJECTION={centerLon:130.25,centerLat:37.25,angle:0,
     uMin:-6.75*K,uMax:6.75*K,vMin:-6.25,vMax:6.25};
+  // Natural Earth admin-0 mask: Chinese/Russian mainland in this viewport is
+  // excluded offmap land, never navigable sea. Regenerate with
+  // tools/build_korea_foreign_mask.py.
+  const FOREIGN_KOREA_LAND=atob('');
+  const foreignKoreaAt=(c,r)=>{
+    const i=r*COLS+c;
+    return !!(FOREIGN_KOREA_LAND.charCodeAt(i>>3)&(128>>(i&7)));
+  };
   // [city, longitude, latitude, owner, factory tier, fortified].
   // Britannian mainland Japan is staging and reinforcement territory;
   // the Chinese Federation initially controls every Korean city.
@@ -297,7 +305,7 @@
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       const mixed=!!(coast.charCodeAt(i>>3)&(128>>(i&7)));
       if(mixed&&!land)throw Error('Korean coast outside land mask');
-      return {c,r,owner:null,terrain:land?(mixed?'coast':landscape(p)):'sea'};
+      return {c,r,owner:null,terrain:land?(mixed?'coast':landscape(p)):foreignKoreaAt(c,r)?'offmap':'sea'};
     });
     // Landmask boundaries come from 37-point geographic sampling; the
     // coastline is never guessed by proximity to a city's port.
@@ -319,13 +327,13 @@
     const components=new Int16Array(g.tiles.length).fill(-1);
     let nextComponent=0;
     for(let i=0;i<g.tiles.length;i++){
-      if(g.tiles[i].terrain==='sea'||components[i]>=0)continue;
+      if(g.tiles[i].terrain==='sea'||E.TERRAIN[g.tiles[i].terrain]?.blocked||components[i]>=0)continue;
       const queue=[g.tiles[i]];
       components[i]=nextComponent;
       for(let k=0;k<queue.length;k++)
         for(const n of E.adjacent(g,queue[k])){
           const j=n.r*COLS+n.c;
-          if(n.terrain==='sea'||components[j]>=0)continue;
+          if(n.terrain==='sea'||E.TERRAIN[n.terrain]?.blocked||components[j]>=0)continue;
           components[j]=nextComponent;queue.push(n);
         }
       nextComponent++;
@@ -336,7 +344,7 @@
       if(!provinceCities.has(component))provinceCities.set(component,[]);
       provinceCities.get(component).push(s);
     }
-    for(const t of g.tiles)if(t.terrain!=='sea'){
+    for(const t of g.tiles)if(t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked){
       const cities=provinceCities.get(components[t.r*COLS+t.c]);
       if(!cities?.length)continue; // Uninhabited islets are neutral.
       let closest=null,shortest=Infinity;
