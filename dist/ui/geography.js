@@ -62,9 +62,12 @@ const GEOGRAPHY = (() => {
         // tiny base. Keep real bays, peninsulas, islands and broad bends.
         if (Math.min(armA, armB) < R * 0.055 ||
             base > Math.min(armA, armB) * 0.32 ||
+            remove.has((i + n - 1) % n) ||
             !safeCoastBridge(points, i)) continue;
         remove.add(i);
       }
+      // Adjacent removals could combine into a new, unchecked shortcut.
+      if (remove.has(0) && remove.has(n - 1)) remove.delete(n - 1);
       if (!remove.size || n - remove.size < 3) break;
       points = points.filter((_, i) => !remove.has(i));
     }
@@ -511,19 +514,24 @@ const GEOGRAPHY = (() => {
   function coast(ctx, polygons, left, right, top, bottom, scale) {
     ctx.strokeStyle = 'rgba(226,233,216,0.66)';
     ctx.lineWidth = 1 / Math.max(scale, 0.5);
-    // Outlines are precomputed once per polygon, never re-traced from the raw
-    // closed fill path on each camera move or atlas chunk repaint.
+    // Outlines are computed once per polygon. Batch all visible Path2D outlines
+    // into a single stroke when available, preserving atlas chunk performance
+    // on coast-heavy regional maps and low-end/mobile GPUs.
+    const batched = FAST_PATH && typeof Path2D.prototype.addPath === 'function'
+      ? new Path2D() : null;
     if (!FAST_PATH) ctx.beginPath();
     for (const p of polygons) {
       if (!intersects(p.bounds, left, right, top, bottom)) continue;
       const outline = coastOutline(p);
-      if (FAST_PATH) ctx.stroke(outline);
+      if (batched) batched.addPath(outline);
+      else if (FAST_PATH) ctx.stroke(outline);
       else for (const [a, b] of outline) {
         ctx.moveTo(a[0], a[1]);
         ctx.lineTo(b[0], b[1]);
       }
     }
-    if (!FAST_PATH) ctx.stroke();
+    if (batched) ctx.stroke(batched);
+    else if (!FAST_PATH) ctx.stroke();
   }
 
   function paintBiomes(ctx, landShapes, left, right, top, bottom) {
