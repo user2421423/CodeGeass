@@ -194,11 +194,15 @@ jobs:
             if(sea<=164)throw Error('Bohai shoreline correction missing in '+id+': '+sea);
             console.log('LUOYANG_BOHAI_CONFIRMED '+JSON.stringify({id,sea}));
           }
+          const baseJapan=E.scenarios.byId['invasion-japan'].create('britannia','normal',20261022);
+          if(!Number.isInteger(baseJapan.scenario.northJapanSeaCorrections)||baseJapan.scenario.northJapanSeaCorrections<1)
+            throw Error('Shared Japan northern sea correction missing');
           for(const id of ['invasion-japan','division-japan','defense-japan','bk-civil-war']){
             const m=E.scenarios.byId[id],g=m.create(m.sides[0],'normal',20261022);
-            if(!Number.isInteger(g.scenario.northJapanSeaCorrections)||g.scenario.northJapanSeaCorrections<1)
-              throw Error('Japan northern sea not corrected '+id);
-            console.log('JAPAN_SHARED_SHORE '+JSON.stringify({id,corrections:g.scenario.northJapanSeaCorrections,ports:g.stations.filter(x=>x.portAt).length}));
+            if(g.tiles.length!==baseJapan.tiles.length)throw Error('Japan variant grid size drift: '+id);
+            const mismatch=g.tiles.filter((t,i)=>t.terrain!==baseJapan.tiles[i].terrain).length;
+            if(mismatch>0)throw Error('Japan variant coastline drift '+id+' '+mismatch);
+            console.log('JAPAN_SHARED_SHORE '+JSON.stringify({id,verifiedWaterCorrections:baseJapan.scenario.northJapanSeaCorrections,ports:g.stations.filter(x=>x.portAt).length}));
           }
           const europe=E.scenarios.byId['european-war'];
           const eg=europe.create(europe.sides[0],'normal',20261022);
