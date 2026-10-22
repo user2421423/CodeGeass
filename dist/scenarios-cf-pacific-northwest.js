@@ -478,7 +478,7 @@
           [resource,Math.round(target)-base[resource]]));
       const actual=E.income(g,side);
       for(const key of Object.keys(FUNDING[side]))
-        g.economy[side][key]=actual[key]*(side==='cf'?3:2);
+        g.economy[side][key]=({cf:{credits:2000,industry:500,science:360},britannia:{credits:2000,industry:500,science:260}}[side]||{})[key] ?? actual[key]*(side==='cf'?3:2);
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player))
