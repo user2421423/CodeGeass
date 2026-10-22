@@ -54,6 +54,9 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Refresh regional map backdrops for updated geography"
+            # build_sources.cjs may leave unrelated generated files modified.
+            # Keep only the committed backdrop assets before rebasing onto main.
+            git restore --worktree -- .
             git pull --rebase origin main
             git push origin HEAD:main
             echo "changed=true" >> "$GITHUB_OUTPUT"
