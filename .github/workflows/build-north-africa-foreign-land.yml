@@ -52,7 +52,11 @@ jobs:
           python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_suez_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_france_foreign_mask.py /tmp/north-africa-countries.geojson
-          python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
+          if grep -q "const BEIJING_LAND_COUNTS=atob('');" dist/scenarios-eu-cf-beijing.js; then
+            python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
+          else
+            echo 'Existing verified Beijing shoreline mask reused'
+          fi
           python3 tools/build_korea_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson
           python3 tools/build_manchuria_north_coast.py /tmp/natural-earth-land.geojson
