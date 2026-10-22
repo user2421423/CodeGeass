@@ -145,7 +145,7 @@
   // This runs once while a NEW scenario's authored funding is being localized;
   // already-localized saves and World Conquest are left untouched.
   function pruneScenarioOpeningCities(g) {
-    if (g.mode !== 'scenario' || g.turn !== 1 || !g.startUnits ||
+    if (g.mode !== 'scenario' || !g.scenario || g.turn !== 1 || !g.startUnits ||
         g.cityStandardMigrated || g.scenario.cityPruningVersion ||
         g.scenario.pruningCities) return;
     g.scenario.pruningCities = true;
@@ -272,7 +272,7 @@
     if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome &&
         !g.scenario?.pruningCities) {
       localizeScenarioIncome(g);
-      if (g.scenario?.economyLocalized) pruneScenarioOpeningCities(g);
+      pruneScenarioOpeningCities(g);
       doubleScenarioResearch(g);
     }
     if (g.scenario?.economyLocalized && g.mode === 'scenario' &&
