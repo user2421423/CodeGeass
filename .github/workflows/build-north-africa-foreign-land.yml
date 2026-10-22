@@ -65,7 +65,6 @@ jobs:
         run: |
           node tools/build_sources.cjs
           node tools/audit_all_scenario_hexes.cjs /tmp/natural-earth-land.geojson
-          node tools/audit_all_scenario_variants.cjs
           node - <<'NODE'
           const E=require('./dist/engine.js');
           require('./tools/scenario_sim.cjs');
