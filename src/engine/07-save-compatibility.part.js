@@ -180,6 +180,9 @@
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
+    // An existing battle keeps its actual city tiers and fortress positions.
+    // Apply the new bidirectional balancing only when starting a fresh scenario.
+    if (regional) g.cityStandardMigrated = true;
     // Existing saves are in progress, not new starts. Do not retroactively
     // double their already-spent Research on the next income calculation.
     if (regional) g.scenario.startingResearchDoubled = true;
