@@ -63,7 +63,11 @@ jobs:
           else
             echo 'Existing verified Black Sea/Caspian mask reused'
           fi
-          python3 tools/build_manchuria_north_coast.py /tmp/natural-earth-land.geojson
+          if grep -q "const MANCHURIA_NORTH_LAND_COUNTS=atob('');" dist/scenarios-eu-cf-manchuria.js; then
+            python3 tools/build_manchuria_north_coast.py /tmp/natural-earth-land.geojson
+          else
+            echo 'Existing verified northern Manchuria mask reused'
+          fi
           python3 tools/build_india_northeast_land.py /tmp/natural-earth-land.geojson
           python3 tools/patch_greenland_mask.py
           python3 tools/build_greenland_foreign_mask.py /tmp/north-africa-countries.geojson
