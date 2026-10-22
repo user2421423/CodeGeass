@@ -766,8 +766,8 @@ const GEOGRAPHY = (() => {
       if (!seen.has(key)) { seen.add(key); tiles.push(t); }
     };
     for (const group of cache.groups.values()) for (const t of group) add(t);
-    // Neutral playable land remains visible even without a political owner.
-    for (const t of g.tiles) if (t.terrain !== 'sea') add(t);
+    // Unowned playable land remains visible; offmap countries are outside the theatre.
+    for (const t of g.tiles) if (t.terrain !== 'sea' && t.terrain !== 'offmap') add(t);
     const path = FAST_PATH ? new Path2D() : null;
     if (path) for (const t of tiles) tacticalHex(path, t, R + .8);
     cache.visibleLand = { path, tiles };
@@ -1156,6 +1156,7 @@ const GEOGRAPHY = (() => {
         if (layer === 'static') {
           // Cover all playable mainland/coastal buffer with neutral geography;
           // political colour is a transparent layer above this immutable base.
+          // offmap hexes are excluded from visibleLand, so neighbouring countries stay hidden.
           if (visibleLand.path) ctx.fill(visibleLand.path);
           else {
             ctx.beginPath();
@@ -1166,7 +1167,7 @@ const GEOGRAPHY = (() => {
           const unowned = FAST_PATH && right-left <= 2048 && bottom-top <= 2048 ? new Path2D() : null;
           if (!unowned) ctx.beginPath();
           for (const t of g.tiles) {
-            if (t.terrain === 'sea' || t.owner) continue;
+            if (t.terrain === 'sea' || t.terrain === 'offmap' || t.owner) continue;
             const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
             const y = 1.5 * R * t.r + R;
             if (x < left - 2*R || x > right + 2*R || y < top - 2*R || y > bottom + 2*R) continue;
@@ -1554,7 +1555,7 @@ ctx.restore();}
     let c = Math.round((x - R) / (SQ * R) - 0.5 * (r & 1));
     if (g.wrap) c = ((c % g.cols) + g.cols) % g.cols;
     const t = g.tiles[r * g.cols + c];
-    return t && t.terrain !== 'sea' ? 1 : 0;
+    return t && t.terrain !== 'sea' && t.terrain !== 'offmap' ? 1 : 0;
   }
   function releaseMap() {
     ownershipCache = islandOwnerCache = japanColorCache = null;
