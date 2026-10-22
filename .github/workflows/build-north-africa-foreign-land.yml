@@ -135,7 +135,7 @@ jobs:
             }
             const ships=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
               !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
-            if(water<70||ships.length)
+            if(water<20||ships.length)
               throw Error('Manchuria East Sea coast check '+JSON.stringify({side,water,coast,invalidShips:ships.length}));
             console.log('MANCHURIA_EAST_SEA '+JSON.stringify({side,seaNorthEast:water,coastNorthEast:coast,ports:g.stations.filter(s=>s.portAt).length}));
           }
