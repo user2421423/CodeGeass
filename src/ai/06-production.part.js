@@ -173,7 +173,11 @@
         .map(s => {
           const d = front(s), tier = cityTierOf(s);
           const fortress = tier === 3 && d >= 3 && d <= 7;
-          const economic = tier < 3 && d >= 5;
+          // Economic city tiers pay back credits in 14–15 income turns.
+          // Do not spend on them near a short scenario's turn limit.
+          const remaining=g.mode==='scenario'&&Number.isFinite(g.scenario?.turnLimit)
+            ? g.scenario.turnLimit-g.turn : Infinity;
+          const economic = tier < 3 && d >= 4 && remaining >= (tier===1?14:15);
           return { s, d, useful: fortress || economic,
             score: (fortress ? 120 : economic ? 60 : 0) + (s.capital ? 15 : 0) +
               (s.portLevel ? 8 : 0) + (d <= 7 ? 12 - d : 0) - 3 * (tier - 1) };
