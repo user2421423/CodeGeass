@@ -10,6 +10,7 @@ on:
       - 'tools/build_beijing_landmask.py'
       - 'tools/build_korea_foreign_mask.py'
       - 'tools/build_caucasus_watermask.py'
+      - 'tools/build_manchuria_north_coast.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -48,6 +49,7 @@ jobs:
           python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
           python3 tools/build_korea_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson
+          python3 tools/build_manchuria_north_coast.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -123,16 +125,31 @@ jobs:
               throw Error('Caucasus split sea basin check '+JSON.stringify({side,basins:[...basins],illegalShips:invalid.length,portsCorrect:correct}));
             console.log('CAUCASUS_SEA_BASINS '+JSON.stringify({side,sea:g.tiles.filter(t=>t.terrain==='sea').length,coast:g.tiles.filter(t=>t.terrain==='coast').length,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const manchuria=E.scenarios.byId['eu-cf-manchuria'];
+          for(const side of manchuria.sides){
+            const g=manchuria.create(side,'normal',20261022);
+            let water=0,coast=0;
+            for(const t of g.tiles){
+              const p=manchuria.bounds ? null : null;
+              if(t.c>120&&t.r<70&&t.terrain==='sea')water++;
+              if(t.c>120&&t.r<70&&t.terrain==='coast')coast++;
+            }
+            const ships=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            if(water<70||ships.length)
+              throw Error('Manchuria East Sea coast check '+JSON.stringify({side,water,coast,invalidShips:ships.length}));
+            console.log('MANCHURIA_EAST_SEA '+JSON.stringify({side,seaNorthEast:water,coastNorthEast:coast,ports:g.stations.filter(s=>s.portAt).length}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Fix Korea foreign land and both Caucasus sea basins using independent geography"
+            git commit -m "Correct Manchuria Sea of Japan northern shoreline from geographic reference"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
