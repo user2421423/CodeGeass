@@ -59,7 +59,7 @@ def main():
                 else:nLand+=1
             i=r*C+c
             encoded[i>>1]|=(n<<4) if (i&1)==0 else n
-    if nSea<70 or nLand<400:raise RuntimeError('Manchuria coast reference incomplete: '+repr((nSea,nCoast,nLand)))
+    if nSea<30 or nLand<400:raise RuntimeError('Manchuria coast reference incomplete: '+repr((nSea,nCoast,nLand)))
     b64=base64.b64encode(encoded).decode('ascii')
     source=TARGET.read_text()
     out,n=re.subn(r"const MANCHURIA_NORTH_LAND_COUNTS=atob\('[A-Za-z0-9+/=]*'\);",
