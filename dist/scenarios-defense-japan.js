@@ -271,7 +271,7 @@
       const actual=E.income(g,side);
       // Equal three-turn reserves: the BK treasury is ~half Britannia's.
       for(const resource of Object.keys(TARGET_INCOME[side]))
-        g.economy[side][resource]=actual[resource]*3;
+        g.economy[side][resource]=({bk:{credits:810,industry:495,science:84},britannia:{credits:1620,industry:500,science:165}}[side]||{})[resource] ?? actual[resource]*3;
     }
     if(difficulty!=='normal'&&difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))
