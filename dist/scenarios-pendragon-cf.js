@@ -22,7 +22,7 @@ const api=shared.defineScenario({
  attacker:'cf',staging:STAGING,armies:CHINESE_ARMIES,defense:WEST_DEFENSE,
  funding:{cf:{credits:1920,industry:1370,science:150,sakuradite:85},
   britannia:{credits:2160,industry:1510,science:166,sakuradite:102}},
- openingStockpile:{cf:{credits:2000,industry:500,science:300},britannia:{credits:2000,industry:500,science:332}},
+ openingStockpile:{cf:{credits:2000,industry:500,science:300,sakuradite:170},britannia:{credits:2000,industry:500,science:332,sakuradite:204}},
  startingSeed:201798,operationKey:'pendragon-west',approach:'west',
  fronts:FRONTS,
  counterattackBases:['Lida','Tonopah','Goldfield','Pendragon','Round Mountain'],
