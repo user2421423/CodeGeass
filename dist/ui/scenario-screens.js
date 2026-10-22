@@ -14,121 +14,124 @@ const SCENARIO_MENU_STYLE = 'combined';
 
 let scenarioLibraryQuery = '';
 let scenarioLibraryTheater = 'all';
+// Geographic theaters are independent of which factions fight there.
+// The two crossover matchups remain under Alternate History; regional
+// alternate timelines are classified by the actual location of their map.
 const SCENARIO_THEATERS = Object.freeze([
   {
-    "id": "alternate-history",
-    "label": "Alternate History",
-    "ids": [
-      "bk-civil-war",
-      "rounds-tournament",
-      "geass-war",
-      "protagonists-antagonists",
-      "partition-britannia",
-      "ufn-civil-war",
-      "eu-military-coup",
-      "rounds-rebellion",
-      "shin-independence",
-      "chinese-civil-war"
+    id: 'east-asia',
+    label: 'East Asia',
+    ids: [
+      'invasion-japan',
+      'defense-japan',
+      'division-japan',
+      'invasion-korea',
+      'bf-south-china',
+      'bf-yangtze',
+      'battle-luoyang',
+      'eu-cf-manchuria',
+      'eu-cf-sichuan',
+      'eu-cf-beijing',
+      'eu-cf-luoyang',
+      'bk-civil-war',
+      'chinese-civil-war',
+      'ufn-civil-war'
     ]
   },
   {
-    "id": "east-asia",
-    "label": "East Asia",
-    "ids": [
-      "invasion-japan",
-      "defense-japan",
-      "division-japan",
-      "invasion-korea",
-      "bf-south-china",
-      "bf-yangtze",
-      "battle-luoyang"
+    id: 'southeast-asia-pacific',
+    label: 'Southeast Asia & Pacific',
+    ids: [
+      'conquest-indochina',
+      'philippines-invasion',
+      'war-for-australia',
+      'invasion-hawaii',
+      'cf-new-zealand',
+      'bf-malacca',
+      'bering-strait'
     ]
   },
   {
-    "id": "pacific",
-    "label": "Southeast Asia & Pacific",
-    "ids": [
-      "conquest-indochina",
-      "philippines-invasion",
-      "war-for-australia",
-      "invasion-hawaii",
-      "cf-new-zealand",
-      "bf-malacca",
-      "bering-strait"
+    id: 'central-asia-siberia',
+    label: 'Central Asia & Siberia',
+    ids: [
+      'britannia-siberia',
+      'crossing-urals',
+      'eu-cf-kazakhstan',
+      'eu-cf-xinjiang',
+      'eu-cf-mongolia',
+      'cf-eu-siberia'
     ]
   },
   {
-    "id": "europe",
-    "label": "Europe & Russia",
-    "ids": [
-      "european-war",
-      "operation-stonehenge",
-      "britannia-siberia",
-      "crossing-urals",
-      "britannia-western-russia"
+    id: 'south-asia',
+    label: 'South Asia',
+    ids: [
+      'eu-cf-india',
+      'eu-cf-himalayas'
     ]
   },
   {
-    "id": "middle-east",
-    "label": "Middle East & Africa",
-    "ids": [
-      "area-18",
-      "britannia-iraq-iran",
-      "invasion-south-africa",
-      "invasion-turkey"
+    id: 'europe',
+    label: 'Europe',
+    ids: [
+      'european-war',
+      'operation-stonehenge',
+      'britannia-western-russia',
+      'cf-eu-caucasus',
+      'cf-eu-volga',
+      'cf-eu-moscow',
+      'cf-eu-balkans',
+      'cf-eu-central-europe',
+      'cf-eu-france',
+      'eu-military-coup',
+      'shin-independence'
     ]
   },
   {
-    "id": "americas",
-    "label": "The Americas",
-    "ids": [
-      "invasion-brazil",
-      "invasion-california",
-      "invasion-canada",
-      "invasion-caribbean",
-      "eu-great-lakes",
-      "eu-greenland",
-      "invasion-american-east-coast",
-      "eu-panama",
-      "cf-panama",
-      "cf-pacific-northwest",
-      "cf-central-america",
-      "cf-mexico",
-      "eu-rocky-mountains",
-      "eu-pendragon",
-      "cf-pendragon"
+    id: 'middle-east-africa',
+    label: 'Middle East & Africa',
+    ids: [
+      'area-18',
+      'britannia-iraq-iran',
+      'invasion-south-africa',
+      'invasion-turkey',
+      'eu-cf-persia',
+      'cf-eu-turkey',
+      'cf-eu-suez',
+      'cf-eu-north-africa'
     ]
   },
   {
-    "id": "eu-federation",
-    "label": "E.U. vs Federation",
-    "ids": [
-      "eu-cf-kazakhstan",
-      "eu-cf-persia",
-      "eu-cf-xinjiang",
-      "eu-cf-india",
-      "eu-cf-mongolia",
-      "eu-cf-manchuria",
-      "eu-cf-himalayas",
-      "eu-cf-sichuan",
-      "eu-cf-beijing",
-      "eu-cf-luoyang"
+    id: 'americas',
+    label: 'The Americas',
+    ids: [
+      'invasion-brazil',
+      'invasion-california',
+      'invasion-canada',
+      'invasion-caribbean',
+      'eu-great-lakes',
+      'eu-greenland',
+      'invasion-american-east-coast',
+      'eu-panama',
+      'cf-panama',
+      'cf-pacific-northwest',
+      'cf-central-america',
+      'cf-mexico',
+      'eu-rocky-mountains',
+      'eu-pendragon',
+      'cf-pendragon',
+      'rounds-rebellion',
+      'rounds-tournament',
+      'partition-britannia'
     ]
   },
   {
-    "id": "federation-eu",
-    "label": "Federation vs E.U.",
-    "ids": [
-      "cf-eu-siberia",
-      "cf-eu-caucasus",
-      "cf-eu-turkey",
-      "cf-eu-volga",
-      "cf-eu-suez",
-      "cf-eu-moscow",
-      "cf-eu-balkans",
-      "cf-eu-north-africa",
-      "cf-eu-central-europe",
-      "cf-eu-france"
+    id: 'alternate-history',
+    label: 'Alternate History',
+    ids: [
+      'geass-war',
+      'protagonists-antagonists'
     ]
   }
 ]);
@@ -151,10 +154,11 @@ function scenarioCatalogRefresh() {
   const term=scenarioLibraryQuery.trim().toLocaleLowerCase();
   const entries=SCENARIO_MANIFEST.filter(({id,title,note})=>
     (scenarioLibraryTheater==='all'||scenarioTheaterOf(id)===scenarioLibraryTheater)&&
-    (!term||(title+' '+note+' '+scenarioTheaterOf(id)).toLocaleLowerCase().includes(term)));
+    (!term||(title+' '+note+' '+(SCENARIO_LIBRARY_GROUPS.find(group=>group.ids.includes(id))?.label||'')).toLocaleLowerCase().includes(term)));
   const groups=scenarioLibraryTheater==='all'?SCENARIO_LIBRARY_GROUPS:SCENARIO_LIBRARY_GROUPS.filter(g=>g.id===scenarioLibraryTheater);
   const normalCatalog=groups.map(group=>{
-    const rows=entries.filter(entry=>group.ids.includes(entry.id));
+    const rows=entries.filter(entry=>group.ids.includes(entry.id))
+      .sort((a,b)=>a.title.localeCompare(b.title));
     if(!rows.length) return '';
     const buttons=rows.map(({id,title,note})=>`<button class="scenario-entry ${id===scenarioKind?'active':''}" type="button" data-scenario-kind="${esc(id)}" aria-pressed="${id===scenarioKind}" title="${esc(title)}">
       <span class="scenario-entry-marker" aria-hidden="true">${id===scenarioKind?'◆':'◇'}</span>
