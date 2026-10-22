@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/build_north_africa_foreign_mask.py'
       - 'tools/build_suez_foreign_mask.py'
+      - 'tools/build_france_foreign_mask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -36,10 +37,11 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error \
             https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
             -o /tmp/natural-earth-land.geojson
-      - name: Rasterize foreign land into the North Africa and Suez scenarios
+      - name: Rasterize foreign land into North Africa, Suez and France
         run: |
           python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_suez_foreign_mask.py /tmp/north-africa-countries.geojson
+          python3 tools/build_france_foreign_mask.py /tmp/north-africa-countries.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -69,16 +71,26 @@ jobs:
               throw Error('Suez foreign land/naval check '+JSON.stringify({side,offmap,ownedOffmap,illegalShips:illegalShips.length}));
             console.log('SUEZ_FOREIGN_LAND '+JSON.stringify({side,offmap,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const france=E.scenarios.byId['cf-eu-france'];
+          for(const side of france.sides){
+            const g=france.create(side,'normal',20261022);
+            const foreignOffmap=g.tiles.filter(t=>t.terrain==='offmap').length;
+            const illegalShips=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            if(foreignOffmap<100||illegalShips.length)
+              throw Error('France foreign land/naval check '+JSON.stringify({side,foreignOffmap,illegalShips:illegalShips.length}));
+            console.log('FRANCE_FOREIGN_LAND '+JSON.stringify({side,offmap:foreignOffmap,ports:g.stations.filter(s=>s.portAt).length}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Use audited foreign country masks for North African and Suez terrain"
+            git commit -m "Use audited foreign country masks for North Africa, Suez and France"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
