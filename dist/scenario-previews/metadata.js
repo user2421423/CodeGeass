@@ -957,19 +957,19 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "partition-britannia": {
-    "cities": 78,
+    "cities": 65,
     "formations": 132,
     "sides": {
       "eu": {
-        "cities": 30,
+        "cities": 20,
         "formations": 50
       },
       "cf": {
-        "cities": 21,
+        "cities": 19,
         "formations": 45
       },
       "remnants": {
-        "cities": 27,
+        "cities": 26,
         "formations": 37
       }
     }
