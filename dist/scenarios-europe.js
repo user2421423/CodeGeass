@@ -288,7 +288,7 @@
           [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
-        g.economy[side][resource]=({"eu":{"credits":1120,"industry":500,"science":120},"eb":{"credits":1290,"industry":500,"science":144}}[side]||{})[resource] ?? (actual[resource]*(sid);
+        g.economy[side][resource]={"eu":{"credits":1120,"industry":500,"science":120,"sakuradite":40},"eb":{"credits":1290,"industry":500,"science":144,"sakuradite":51}}[side][resource];
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
