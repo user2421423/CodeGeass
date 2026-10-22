@@ -54,7 +54,8 @@ function create(_,__,seed){
 }
 const geography={id:'mainland-china',title:'Mainland China',cols:COLS,rows:ROWS,sides:['ufn','cf'],cityData,create,locate,geographicAt:geo,
  meta:{map:{centreSampled:true,coastBuffer:0,homeZoom:2.7,overviewMarkers:true}}};
-const api=common.define({id:'ufn-civil-war',title:'UFN Civil War',geography,owner:row=>row[3],
+const api=common.define({
+ treasury:{"ufn":{"credits":2000,"industry":500,"science":500,"sakuradite":25},"cf":{"credits":2000,"industry":500,"science":500,"sakuradite":15}},id:'ufn-civil-war',title:'UFN Civil War',geography,owner:row=>row[3],
  intro:'Alternate history: the UFN fractures across mainland China. The Black Knights and UFN-aligned eastern cities establish a rival government at Nanjing, while the Chinese Federation consolidates its western and interior provinces around Luoyang. The conflict now reaches Xinjiang, Tibet, Manchuria, Shanghai and the far south.',
  terrain:'All mainland China is playable, from Kashgar and Lhasa to Harbin and Guangzhou. No foreign provinces or Taiwan.',
  rosters:{ufn:['bk'],cf:['cf']},
