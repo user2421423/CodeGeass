@@ -528,7 +528,7 @@
           [resource,difficulty==='elite' ? Math.max(0,Math.round(value)-base[resource]) : Math.round(value)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(target))
-        g.economy[side][resource]=({britannia:{credits:800,industry:440,science:84},bk:{credits:600,industry:350,science:64},cf:{credits:1280,industry:500,science:136}}[side]||{})[resource] ?? actual[resource]*STARTING_RESERVE_TURNS[side];
+        g.economy[side][resource]=({britannia:{credits:800,industry:440,science:84,sakuradite:56},bk:{credits:600,industry:350,science:64,sakuradite:24},cf:{credits:1280,industry:500,science:136,sakuradite:60}}[side])[resource];
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(s=>s!==player))
