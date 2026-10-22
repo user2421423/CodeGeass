@@ -118,8 +118,8 @@ for(const id of Object.keys(registry).sort()){
    }
    for(const u of g.units){
     const t=E.tile(g,u.c,u.r);
-    if(!t||t.terrain==='offmap'||t.terrain==='peak')stats.errors.push('unit on blocked terrain '+u.id);
-    if(t&&E.TYPES[u.type]?.naval==='ship'&&!hasWater(t))stats.errors.push('ship on land '+u.id);
+    if(!t||(!E.TYPES[u.type]?.air&&(t.terrain==='offmap'||t.terrain==='peak')))stats.errors.push('unit on blocked terrain '+u.id+' '+u.type);
+    if(t&&E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&!hasWater(t))stats.errors.push('ship on land '+u.id+' '+u.type);
    }
   }else{
    let changed=0;
