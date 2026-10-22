@@ -881,7 +881,9 @@ const GEOGRAPHY = (() => {
   function paintBering(ctx,g,left,right,top,bottom) {
     ctx.save();
     ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
-    const sea=ctx.createLinearGradient(0,top,0,bottom);
+    // Keep ocean shading in world coordinates: this painter is called once per
+    // cached atlas chunk, and chunk-local gradients create horizontal stripes.
+    const sea=ctx.createLinearGradient(0,0,0,mapH(g));
     sea.addColorStop(0,'#205372');sea.addColorStop(1,'#103d5b');
     ctx.fillStyle=sea;ctx.fillRect(left,top,right-left,bottom-top);
     const revision=g.mapRevision||0;
@@ -1079,7 +1081,9 @@ const GEOGRAPHY = (() => {
     ctx.beginPath();
     ctx.rect(left, top, right - left, bottom - top);
     ctx.clip();
-    const sea = ctx.createLinearGradient(0, top, 0, bottom);
+    // The Bering atlas is painted in separate camera/cache chunks. Anchor the
+    // ocean gradient to the full map rather than the chunk to avoid bands.
+    const sea = ctx.createLinearGradient(0, 0, 0, mapH(g));
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
     ctx.fillStyle = sea;
