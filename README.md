@@ -287,7 +287,7 @@ reproduce `tools/data/sim_baseline.txt` unless a change is meant to alter play.
 
 ## Tests and simulations
 
-The repository has no regression test suite. These checks verify the build, art and maps:
+The transport turn-rule regression check runs in the Pages deployment workflow; the remaining commands verify the build, art and maps:
 
 ```sh
 node tools/build_sources.cjs
