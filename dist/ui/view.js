@@ -449,6 +449,19 @@ function showHexInfo(x, y) {
 // a long press on a friendly formation adds it to the selection, like Shift-click.
 const LONG_PRESS_MS = 500;
 let touches = new Map(), pinch = null, armedAttack = null, longPressTimer = null;
+// An interrupted pinch must never leave a phantom finger behind: otherwise the
+// next single-finger tap is mistaken for a new pinch and only zooms the map.
+function resetMapGesture() {
+  clearTimeout(longPressTimer);
+  longPressTimer = null;
+  touches.clear();
+  pinch = null;
+  pointer = null;
+  if (canvas) canvas.style.cursor = 'default';
+}
+function resetMapGestureWhenHidden() {
+  if (document.hidden) resetMapGesture();
+}
 const touchMid = () => {
   const [a, b] = [...touches.values()];
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) };
@@ -459,20 +472,36 @@ function isAttackHex(p) {
   return targetCache.has(k) && (selectedStation() || selectedUnit()?.side === game.player);
 }
 function attachMap() {
+  // attachMap may run again on a newly rendered map while an old pointer is
+  // still down. Never carry that gesture into a different canvas or battle.
+  resetMapGesture();
+  window.removeEventListener('blur', resetMapGesture);
+  window.addEventListener('blur', resetMapGesture);
+  document.removeEventListener('visibilitychange', resetMapGestureWhenHidden);
+  document.addEventListener('visibilitychange', resetMapGestureWhenHidden);
   canvas.onpointerdown = e => {
     if (e.button !== 0 && e.pointerType !== 'touch') return;
     touchInput = e.pointerType === 'touch';
     canvas.focus({ preventScroll: true });
     if (touchInput) {
+      e.preventDefault();
+      // Capture is authoritative: a touch whose capture was lost (for
+      // example on interruption or canvas replacement) is no longer active.
+      for (const id of touches.keys())
+        if (!canvas.hasPointerCapture(id)) touches.delete(id);
+      if (!touches.size) { pinch = null; pointer = null; }
       touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (touches.size === 2) {
+      if (touches.size >= 2) {
         clearTimeout(longPressTimer);
+        longPressTimer = null;
         pointer = null;
-        pinch = touchMid();
+        pinch = touches.size === 2 ? touchMid() : null;
         canvas.setPointerCapture(e.pointerId);
         return;
       }
-      if (touches.size > 2) return;
+    } else if (touches.size) {
+      // A mouse/trackpad action must not inherit unfinished touch state.
+      resetMapGesture();
     }
     pointer = { x: e.clientX, y: e.clientY, cam: { ...cam }, dragged: false, id: e.pointerId, shift: e.shiftKey };
     canvas.setPointerCapture(e.pointerId);
@@ -487,8 +516,9 @@ function attachMap() {
     }, LONG_PRESS_MS);
   };
   canvas.onpointermove = e => {
-    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pinch && touches.size === 2) {
+    const trackedTouch = touches.has(e.pointerId);
+    if (trackedTouch) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (trackedTouch && pinch && touches.size === 2) {
       const now = touchMid(), rect = canvas.getBoundingClientRect();
       if (typeof noteMapNavigation === 'function') noteMapNavigation();
       if (pinch.d > 0 && now.d > 0) changeZoom(now.d / pinch.d, { x: now.x - rect.left, y: now.y - rect.top });
@@ -499,7 +529,7 @@ function attachMap() {
       requestMapFrame();
       return;
     }
-    if (pointer) {
+    if (pointer && pointer.id === e.pointerId) {
       const dx = e.clientX - pointer.x,
         dy = e.clientY - pointer.y;
       if (Math.hypot(dx, dy) > (touchInput ? 10 : 5)) { pointer.dragged = true; clearTimeout(longPressTimer); }
@@ -516,14 +546,22 @@ function attachMap() {
     if (e.pointerType !== 'touch') showHexInfo(e.clientX, e.clientY);
   };
   canvas.onpointerup = e => {
-    clearTimeout(longPressTimer);
-    if (touches.delete(e.pointerId) && pinch) {
-      // Lifting a finger ends the pinch; the remaining finger does not start a tap or drag.
-      if (touches.size < 2) pinch = null;
+    const wasTouch = touches.delete(e.pointerId);
+    // Once a multi-touch gesture begins, none of its fingers may become a
+    // click, even if they lift separately (or a third finger joins).
+    if (wasTouch && (pinch || touches.size > 0 || pointer?.id !== e.pointerId)) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      pinch = null;
       pointer = null;
+      canvas.style.cursor = 'default';
       return;
     }
-    if (pointer?.longPressed) { pointer = null; return; }
+    // Unrelated pointers must not end a different pointer's tap/drag.
+    if (!pointer || pointer.id !== e.pointerId) return;
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    if (pointer.longPressed) { pointer = null; return; }
     if (pointer && !pointer.dragged && e.pointerType === 'touch') {
       const p = hitHex(e.clientX, e.clientY);
       showHexInfo(e.clientX, e.clientY);
@@ -570,10 +608,12 @@ function attachMap() {
     canvas.style.cursor = 'default';
   };
   canvas.onpointercancel = e => {
-    clearTimeout(longPressTimer);
-    touches.delete(e.pointerId);
-    if (touches.size < 2) pinch = null;
-    pointer = null;
+    if (touches.has(e.pointerId) || pointer?.id === e.pointerId) resetMapGesture();
+  };
+  canvas.onlostpointercapture = e => {
+    // Browsers can release capture without delivering pointerup (tab switch,
+    // system gesture, cancelled touch). Discard the entire partial gesture.
+    if (touches.has(e.pointerId) || pointer?.id === e.pointerId) resetMapGesture();
   };
   canvas.onpointerleave = e => {
     // A lifted finger "leaves"; keep its tapped hex highlighted.
@@ -581,6 +621,8 @@ function attachMap() {
   };
   canvas.onwheel = e => {
     e.preventDefault();
+    // A touch pinch is already handled by pointermove; never zoom it twice.
+    if (touches.size) return;
     const rect = canvas.getBoundingClientRect();
     // Standard mouse wheels zoom quickly; small trackpad deltas remain smooth.
     // Delta units vary between pixels, lines and pages across browsers.
