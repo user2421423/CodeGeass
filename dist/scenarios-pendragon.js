@@ -284,7 +284,7 @@ function create(player=attacker,difficulty='normal',seed=startingSeed){
    .map(([res,n])=>[res,Math.round(n)-base[res]]));
   const actual=E.income(g,side);
   for(const res of Object.keys(FUNDING[side]))
-   g.economy[side][res]=openingStockpile[side]?.[res] ?? actual[res]*2;
+   g.economy[side][res]=openingStockpile[side][res];
  }
  E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
@@ -320,7 +320,7 @@ const euApi=defineScenario({
  attacker:'eu',staging:EU_STAGING,armies:EU_ARMIES,defense:EAST_DEFENSE,
  funding:{eu:{credits:1850,industry:1250,science:145,sakuradite:80},
   britannia:{credits:2100,industry:1480,science:160,sakuradite:98}},
- openingStockpile:{eu:{credits:2000,industry:500,science:290},britannia:{credits:2000,industry:500,science:320}},
+ openingStockpile:{eu:{credits:2000,industry:500,science:290,sakuradite:160},britannia:{credits:2000,industry:500,science:320,sakuradite:196}},
  startingSeed:201799,operationKey:'pendragon-east',approach:'east',
  fronts:EU_FRONTS,
  counterattackBases:['Rachel','Tonopah','Pendragon','Royal Arsenal','Warm Springs'],
