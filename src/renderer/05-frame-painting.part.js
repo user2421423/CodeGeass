@@ -350,60 +350,8 @@ function draw(time, dt) {
       ctx.save();
       ctx.translate(x, base.y);
       if (!detail) {
-        ctx.beginPath();
-        const europeOverview = game.mode === 'scenario' && !!E.scenarios?.byId?.[game.scenario?.id]?.meta?.map?.overviewMarkers;
-        // Keep regional formations screen-readable on continent-size views.
-        // Conquest uses its original marker sizing.
-        const scenarioOverview = game.mode === 'scenario';
-        const radius = scenarioOverview
-          ? Math.max(15, 6.5 / Math.max(scale, 0.05))
-          : europeOverview ? Math.max(15, 5 / scale) : 15;
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        // The original faction plate is a single, solid military counter.
-        // At strategic zoom a non-player formation must NOT become a bullseye
-        // from stacked outlines or a second HP arc over its tiny center.
-        ctx.fillStyle = PLATE[artSide(u.side)].light;
-        ctx.fill();
-        if (readyUnit(u) || sel || multi) {
-          if (readyUnit(u)) mapHasPulse = true;
-          const pulse = 0.82 + 0.18 * Math.sin(time / 210);
-          ctx.shadowColor = `rgba(255,210,108,${(sel || multi ? 0.92 : 0.7) * pulse})`;
-          ctx.shadowBlur = sel || multi ? 12 : 9;
-        }
-        if (u.side !== game.player) {
-          // One crisp outline: dark over light territories, light at sea.
-          // Allies use a pale-blue edge so they remain distinct from enemies.
-          const allied = u.side !== 'neutral' && !hostileUnit(u);
-          ctx.strokeStyle = allied ? '#c0f1ff' : sea ? '#fff3dd' : '#0b1724';
-          ctx.lineWidth = (allied ? 1.9 : 2) / Math.max(scale, 0.05);
-          ctx.stroke();
-        } else {
-          // Preserve the player's original zoomed-out HP ring and emphasis.
-          const integrity = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
-          ctx.strokeStyle = '#0c1924e0';
-          ctx.lineWidth = scenarioOverview
-            ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
-          ctx.stroke();
-          if (integrity > 0) {
-            ctx.beginPath();
-            ctx.arc(0, 0, 15, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
-            ctx.strokeStyle = unitRingColor(u);
-            ctx.stroke();
-          }
-        }
-        ctx.shadowBlur = 0;
-        // Gold commander pip distinguishes named officers from ordinary
-        // formations while preserving the familiar side-coloured unit rings.
-        if ((europeOverview || scenarioOverview) && u.cmd) {
-          ctx.beginPath();
-          ctx.arc(0, -radius - 2.5 / scale, 2.1 / scale, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffe3a0';
-          ctx.fill();
-        }
-        if(group && u.side===game.player){
-          outlinedText('G'+group.id,-18,-13,11,groupColor,scale,'Trebuchet MS',true);
-          if(focusedGroup?.id===group.id){ctx.beginPath();ctx.arc(0,0,radius+4/Math.max(scale,0.3),0,Math.PI*2);ctx.strokeStyle=groupColor;ctx.lineWidth=2.8/Math.max(scale,0.3);ctx.stroke();}
-        }
+        // Strategic zoom uses HOI4-inspired flag counters; tactical unit art is unchanged.
+        drawStrategicDivisionCounter(u, t, scale, sea, time, sel, multi, spent, group, groupColor, focusedGroup);
         ctx.restore();
         continue;
       }
