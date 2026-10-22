@@ -426,7 +426,7 @@
         .map(([resource,n])=>[resource,Math.round(n)-generated[resource]]));
       const total=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
-        g.economy[side][resource]=total[resource]*(side==='cf'?3:2);
+        g.economy[side][resource]=({cf:{credits:2000,industry:500,science:465},britannia:{credits:2000,industry:500,science:290}}[side]||{})[resource] ?? total[resource]*(side==='cf'?3:2);
     }
     E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
