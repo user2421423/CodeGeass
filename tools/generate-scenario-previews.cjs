@@ -54,6 +54,9 @@ async function generate(){
     const m=E.scenarios.byId[id];if(!m)throw Error('Missing model: '+id);
     const g=m.create(m.sides[0],'normal',246801);
     KnightmareScenarioForces.reduce(g);
+    // Apply the fixed authored city roster before exporting city counts.
+    // Regional rosters are finalized on the first engine income query.
+    for (const side of m.sides) E.income(g,side);
     const sides=Object.fromEntries(m.sides.map(side=>[side,{
      cities:g.stations.filter(st=>st.owner===side).length,
      formations:g.units.reduce((n,u)=>n+(u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)
