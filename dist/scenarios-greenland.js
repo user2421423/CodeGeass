@@ -10,6 +10,9 @@
   const BOUNDS={west:-78,east:-10,north:84,south:58};
   const K=Math.cos(71*Math.PI/180);
   const PROJECTION={centerLon:-44,centerLat:71,angle:0,uMin:-34*K,uMax:34*K,vMin:-13,vMax:13};
+  // Natural Earth source for Canadian Arctic islands outside playable Greenland.
+  const FOREIGN_GREENLAND_LAND=atob('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABw7gAAAAAAAAAAAAAAAAAAACfv/yoAAAAAAAAAAAAAAAAAA9////gAAAAAAAAAAAAAAAAAP/////AAAAAAAAAAAAAAAAAD/////gAAAAAAAAAAAAAAAAA/////gAAAAAAAAAAAAAAAAAP///8AAAAAAAAAAAAAAAAAAD///wAAAAAAAAAAAAAAAAAAAf//nwAAAAAAAAAAAAAAAAAAP///gAAAAAAAAAAAAAAAAAAA///gAAAAAAAAAAAAAAAAAAA///gAAAAAAAAAAAAAAAAAAAP/+wAAAAAAAAAAAAAAAAAAAD//AAAAAAAAAAAAAAAAAAAAA//4AAAAAAAAAAAAAAAAAAAAP84AAAAAAAAAAAAAAAAAAAAD/wAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAAAAAP4AAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAA/gAAAAAAAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAAAAAAAAD4AAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAAAAAAAAD4AAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAPYAAAAAAAAAAAAAAAAAAAAAD2gAAAAAAAAAAAAAAAAAAAAA/3AAAAAAAAAAAAAAAAAAAAAP38AAAAAAAAAAAAAAAAAAAAD/+AAAAAAAAAAAAAAAAAAAAA/+4AAAAAAAAAAAAAAAAAAAAP//wAAAAAAAAAAAAAAAAAAAD///AAAAAAAAAAAAAAAAAAAA//+IAAAAAAAAAAAAAAAAAAAH///AAAAAAAAAAAAAAAAAAAA///wAAAAAAAAAAAAAAAAAAAP//IAAAAAAAAAAAAAAAAAAAE///AAAAAAAAAAAAAAAAAAAAH/+AAAAAAAAAAAAAAAAAAAAO//4AAAAAAAAAAAAAAAAAAABH/8AAAAAAAAAAAAAAAAAAAAE//gAAAAAAAAAAAAAAAAAAAGD/+AAAAAAAAAAAAAAAAAAAD4//wAAAAAAAAAAAAAAAAAAA9n//gAAAAAAAAAAAAAAAAAAeB//8AAAAAAAAAAAAAAAAAADwP//gAAAAAAAAAAAAAAAAAAAH//8AAAAAAAAAAAAAAAAAAAB///IAAAAAAAAAAAAAAAAAAA///+AAAAAAAAAAAAAAAAAAAf///gAAAAAAAAAAAAAAAAAAP/9/4AAAAAAAAAAAAAAAAAAH//H+AAAAAAAAAAAAAAAAAAA//A/AAAAAAAAAAAAAAAAAAAH/4PwAAAAAAAAAAAAAAAAAAH//DwAAAAAAAAAAAAAAAAAB3//wcAAAAAAAAAAAAAAAAAA///+AAAAAAAAAAAAAAAAAAAP///wAAAAAAAAAAAAAAAAAAD9///AAAAAAAAAAAAAAAAAAA+H//4AAAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAAAAAAAAACAH//gAAAAAAAAAAAAAAAAAAAB/f4AAAAAAAAAAAAAAAAAACAD4/AAAAAAAAAAAAAAAAAAAAD+PAAAAAAAAAAAAAAAAAAAAAP44AAAAAAAAAAAAAAAAAAAAB/EAAAAAAAAAAAAAAAAAAABAT4gAAAAAAAAAAAAAAAAAA4IA+IAAAAAAAAAAAAAAAAAAP3AD4AAAAAAAAAAAAAAAAAAD/4AEAAAAAAAAAAAAAAAAAAA//AAIAAAAAAAAAAAAAAAAAAP/4AGAAAAAAAAAAAAAAAAAAB/+AAAAAAAAAAAAAAAAAAAAA//wAAAAAAAAAAAAAAAAAAAAP//QAAAAAAAAAAAAAAAAAAAD//4AAAAAAAAAAAAAAAAAAAAf/+IEAAAAAAAAAAAAAAAAAAP//kCAAAAAAAAAAAAAAAAAAB//4AAAAAAAAAAAAAAAAAAAAf/+AMAAAAAAAAAAAAAAAAAAH//gDgAAAAAAAAAAAAAAAAAD//4BwAAAAAAAAAAAAAAAAAA///AfAAAAAAAAAAAAAAAAAAP//wHwAAAAAAAAAAAAAAAAAD//3B+AAAAAAAAAAAAAAAAAA///x/AAAAAAAAAAAAAAAAAAP//+/8AAAAAAAAAAAAAAAAAB////9AAAAAAAAAAAAAAAAAA');
+  const foreignGreenlandAt=(c,r)=>{const i=r*COLS+c;return !!(FOREIGN_GREENLAND_LAND.charCodeAt(i>>3)&(128>>(i&7)));};
   // GSHHS intermediate-resolution Greenland-only polygons, including nearshore islets.
   // Each hex sampled at 17 locations; transition coordinates are hexadecimal columns.
   const COAST_ROWS=`;58.1,5b.0;4e.1,53.2,62.1,68.0;44.1,48.0,4a.1,51.2,60.1,62.2,67.1,69.0;3f.1,44.2,49.1,4a.2,4b.1,50.2,58.1,59.2,5a.1,5f.2,64.1,68.2,6b.1,6c.0;3b.1,3d.0,3f.1,4a.2,57.1,58.2,6a.1,6b.2,6d.1,71.0;3d.1,3e.2,40.1,43.2,48.1,49.2,4a.1,4d.2,73.1,74.0;36.2,3a.1,3b.0,3e.1,3f.2,42.1,45.2,4b.1,4c.2,70.1,71.0;27.1,2c.2,30.0,31.2,33.1,35.0,37.1,38.2,3d.1,40.0,41.1,43.2,5f.1,6d.0,75.1,76.0;22.1,26.2,30.0,31.1,39.2,40.1,41.0,42.1,43.2,5b.1,5e.0,5f.1,63.2,68.1,6b.0,6d.2,71.1,72.0,75.1,77.0,7d.1,82.0;21.1,22.2,26.1,28.2,30.1,32.2,38.1,39.2,5a.1,5d.2,69.1,6b.0,6c.1,6e.2,72.1,73.0,79.1,7a.0,7b.1,7d.2,85.1,87.0;21.1,22.2,28.1,29.2,66.1,6a.2,71.1,72.0,73.1,7b.2,86.1,87.0;21.1,22.2,70.1,72.0,73.1,74.2,84.1,85.0;1b.1,1d.2,1f.1,22.2,6f.1,70.0,71.2,81.1,83.0;1a.1,1b.2,6f.1,70.2,80.1,82.0;17.1,19.2,6d.1,6f.2,75.1,76.2,79.1,7d.0;16.1,17.2,7e.1,7f.0;15.1,16.2,1b.1,1c.2,76.1,7d.0;18.1,1a.0,1b.1,1d.2,76.1,78.2,7c.1,7d.0;1a.1,1b.2,76.1,77.2,78.1,7b.0;1b.1,1c.2,78.0;19.1,1a.2,77.1,78.0;13.1,19.2,77.1,79.0;11.1,12.2,75.1,79.0;e.1,f.2,75.1,76.0;b.2,74.1,75.0;b.2,74.1,75.0;a.1,b.2,73.1,74.0,75.1,76.0;d.1,10.2,73.1,75.2,76.1,79.0,7b.1,7d.0;f.1,11.2,15.1,16.0,17.1,18.2,75.1,76.0,77.1,79.0;b.1,10.0,13.1,18.2,77.1,7b.0;e.1,f.2,11.1,12.2,13.1,14.2,7a.1,7b.0;e.1,f.2,10.1,11.2,76.1,78.2,7b.0;10.1,12.2,13.1,14.2,71.1,72.0,73.2,74.1,75.0,79.1,7a.0;12.1,13.2,73.1,74.0,79.1,7a.0;11.1,12.2,18.1,19.2,1b.1,1c.2,1d.1,1f.2,73.1,76.0,79.1,7a.0;13.1,15.2,16.1,18.0,19.1,1b.0,23.1,24.2,77.1,78.0,7a.1,7b.0;25.1,26.2,76.1,78.0;27.1,29.2,73.1,74.2,78.1,79.0;28.1,29.2,74.1,75.2,78.1,79.0;28.1,29.2,75.1,76.0,77.1,7a.2,7b.1,7c.0;29.1,2a.2,75.1,77.0,79.1,7c.0;2b.1,2c.2,76.1,78.0;2a.1,2c.2,78.1,7a.0;2c.1,2d.2,73.1,74.2,76.1,77.2,79.0;2b.1,2d.2,72.1,76.0;2c.1,2e.2,74.1,76.0;2d.2,6c.1,70.2,76.0;2e.1,2f.2,6c.1,6e.0,6f.1,70.2,74.1,77.0;2e.1,2f.2,68.1,6c.2,6f.1,70.0,71.1,73.0;2e.1,2f.2,68.1,69.2,6d.1,6e.2,71.1,72.0;2e.1,30.2,69.1,6e.2,70.1,71.2,72.1,73.0;2d.1,2f.0,30.2,6d.1,6f.2,71.1,73.0;2d.1,2f.2,6b.1,6e.0,6f.1,70.2,71.1,73.0;2e.1,30.2,31.1,32.2,6f.1,70.0,71.1,73.0;2d.1,2f.2,65.1,67.2,71.1,72.0;2e.1,2f.2,32.1,34.2,67.1,69.2,71.1,73.0;2d.1,2e.2,31.1,36.2,67.1,6c.2,71.1,73.0;33.1,37.2,6c.1,6e.2,72.1,74.0;31.2,32.0,34.1,37.2,6a.1,6b.0,6d.1,6e.2,73.1,74.0;35.1,38.2,66.1,6b.2,6c.1,6d.0,6e.1,6f.2,73.1,74.0;30.2,34.1,38.2,66.1,68.2,6b.1,6c.0,6e.1,6f.2,73.1,74.0;2f.1,30.0,31.1,32.2,36.1,38.2,66.1,67.2,68.1,6a.0,70.1,74.0;2f.1,30.2,31.1,34.2,67.1,6b.2,6d.1,6f.0;30.1,31.2,33.1,34.0,35.1,39.2,66.1,69.2,72.1,73.0;2f.2,34.1,35.0,36.1,39.2,70.1,71.0;2f.1,31.2,35.1,36.0,37.1,38.2,6f.1,70.0;30.1,31.2,32.1,34.0,37.1,38.2,6d.1,6e.0;37.1,3a.2,6d.0;37.2,6b.1,6c.0;34.1,35.0,37.1,38.2,6a.1,6b.0;33.1,37.2,5d.1,5e.2,65.1,68.0;33.1,34.2,36.1,38.2,5e.1,5f.2,62.1,65.0;32.1,33.2,35.1,38.2,5e.0,5f.1,62.0;32.1,33.2,34.1,35.2,37.1,39.2,5d.1,5e.0;31.1,32.2,35.1,37.2,5c.0;32.2,5c.0;31.1,33.2,5b.0;32.1,33.2,5a.1,5b.0;32.1,34.2,35.1,37.2,5a.0;32.1,34.2,59.1,5a.0;31.1,32.2,52.1,53.2,58.1,59.0;32.1,33.2,52.1,54.2,57.0;32.1,33.2,51.1,53.2,54.1,56.0;33.1,34.2,37.1,38.2,4f.1,50.2,52.1,54.0;33.1,35.2,4e.1,4f.0;34.1,35.2,4e.1,4f.0;34.1,35.2,4b.1,4c.0,4d.1,4e.0;35.1,36.2,4c.1,4d.0;34.1,35.2,36.1,39.2,4c.1,4d.0;35.1,3a.2,4c.1,4e.0;35.1,38.2,4a.1,4d.0;36.1,37.2,4d.0;36.2,4b.1,4d.0;37.1,38.2,4c.1,4d.0;37.1,38.2,4a.1,4c.0;38.1,39.2,49.1,4c.0;38.1,39.2,48.1,49.2,4a.0;39.1,3a.2,48.1,4a.0;38.1,39.2,48.1,49.0;3a.1,3b.2,49.1,4a.0;3a.1,3c.2,48.1,4a.0;3a.1,3c.2,49.1,4a.0;3b.2,48.1,49.0;3c.1,3d.2,49.0;3c.1,3d.2,41.1,43.2,48.0;3d.1,42.2,48.1,49.0;41.1,42.2,47.1,48.0;42.1,45.2,47.1,48.0;42.1,44.2,47.0;44.1,48.0;45.1,46.0;;;;;;;;`.split(';').map(row=>row?row.split(',').map(s=>{
@@ -75,27 +78,27 @@
     // preserves the Cape of Good Hope and narrow coastal approaches.
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=coastCoverageClass(c,r);
-      return {c,r,owner:null,terrain:fraction===0?'sea':
-        fraction===1?'coast':landscape(p)};
+      return {c,r,owner:null,terrain:foreignGreenlandAt(c,r)?'offmap':
+        fraction===0?'sea':fraction===1?'coast':landscape(p)};
     });
     // Map Greenland's inland ice cover from actual distance to marine shore.
     // Coastal snow and fjord mountains remain traversable; the thick inland
     // cap is blocked, but there are no inland enemy-city objectives.
     const iceDistance=new Int16Array(g.tiles.length).fill(-1),iceQueue=[];
     for(const t of g.tiles){
-      if(t.terrain==='sea')continue;
+      if(t.terrain==='sea'||t.terrain==='offmap')continue;
       if(E.adjacent(g,t).some(n=>n.terrain==='sea')){
         iceDistance[t.r*COLS+t.c]=0;iceQueue.push(t);
       }
     }
     for(let i=0;i<iceQueue.length;i++)for(const n of E.adjacent(g,iceQueue[i])){
       const index=n.r*COLS+n.c;
-      if(n.terrain==='sea'||iceDistance[index]>=0)continue;
+      if(n.terrain==='sea'||n.terrain==='offmap'||iceDistance[index]>=0)continue;
       iceDistance[index]=iceDistance[iceQueue[i].r*COLS+iceQueue[i].c]+1;
       iceQueue.push(n);
     }
     for(const t of g.tiles){
-      if(t.terrain==='sea'||t.terrain==='coast')continue;
+      if(t.terrain==='sea'||t.terrain==='coast'||t.terrain==='offmap')continue;
       const depth=iceDistance[t.r*COLS+t.c];
       if(depth>=6){t.terrain='peak';t.biome='ice-sheet';}
       else if(depth>=3){t.terrain='snow';t.biome='ice-sheet';}
@@ -109,7 +112,7 @@
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
-      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&t.terrain!=='peak'&&
+      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&t.terrain!=='offmap'&&t.terrain!=='peak'&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Greenland coastal city '+name);
@@ -128,11 +131,11 @@
     const components=new Int16Array(g.tiles.length).fill(-1);
     let id=0;
     for(let i=0;i<g.tiles.length;i++){
-      if(g.tiles[i].terrain==='sea'||components[i]>=0)continue;
+      if(g.tiles[i].terrain==='sea'||g.tiles[i].terrain==='offmap'||components[i]>=0)continue;
       const q=[g.tiles[i]];components[i]=id;
       for(let k=0;k<q.length;k++)for(const n of E.adjacent(g,q[k])){
         const j=n.r*COLS+n.c;
-        if(n.terrain==='sea'||components[j]>=0)continue;
+        if(n.terrain==='sea'||n.terrain==='offmap'||components[j]>=0)continue;
         components[j]=id;q.push(n);
       }
       id++;
@@ -143,7 +146,7 @@
       if(!byComponent.has(k))byComponent.set(k,[]);
       byComponent.get(k).push(s);
     }
-    for(const t of g.tiles)if(t.terrain!=='sea'){
+    for(const t of g.tiles)if(t.terrain!=='sea'&&t.terrain!=='offmap'){
       const eligible=byComponent.get(components[t.r*COLS+t.c])||g.stations;
       let city=null,d=Infinity;
       for(const s of eligible){
@@ -167,7 +170,7 @@
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>t.terrain!=='sea'&&t.terrain!=='offmap'&&!E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
@@ -228,7 +231,7 @@
     for(const ship of carriers)delete ship.pendingPassengers;
     // Keep the North Atlantic, Davis Strait, Baffin Bay and east-coast corridors navigable.
     const depth=new Int16Array(g.tiles.length).fill(-1),q=[];
-    for(const t of g.tiles)if(t.terrain!=='sea'){
+    for(const t of g.tiles)if(t.terrain!=='sea'&&t.terrain!=='offmap'){
       depth[t.r*COLS+t.c]=0;q.push(t);
     }
     for(let i=0;i<q.length;i++){
