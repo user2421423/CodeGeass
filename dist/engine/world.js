@@ -336,33 +336,33 @@
   ];
   // [side, class, lon, lat, frames, commander]. Units snap to their nearest free land hex.
   const ARMY_DATA = [
-    // Britannia: Pendragon, the Atlantic coast, South America, Area 11 and the Pacific.
+    // 2017 Britannia: Bismarck guards Pendragon; other mainland formations deploy to Japan, the Philippines, Alaska or Greenland.
     ['britannia', 'super', -117, 37.5, 1, 'bismarck'],
-    ['britannia', 'heavy', -114, 38, 2],
-    ['britannia', 'medium', -120, 40, 2],
-    ['britannia', 'light', -110, 36, 2],
-    ['britannia', 'medium', -74, 41, 2],
-    ['britannia', 'light', -77, 39, 2],
-    ['britannia', 'rocket', -72, 43, 1],
-    ['britannia', 'scout', -64, 45, 2],
-    ['britannia', 'light', -43, -22, 2],
-    ['britannia', 'scout', -35, -8, 1],
-    ['britannia', 'support', -58, -34, 1],
-    ['britannia', 'scout', -80, 9, 1],
-    ['britannia', 'super', 139.7, 35.7, 1, 'suzaku'],
-    ['britannia', 'heavy', 136, 35, 2, 'cornelia'],
-    ['britannia', 'medium', 131, 33.5, 2, 'lelouch'], // 2017: Lelouch starts in Japan (Fukuoka), not China.
-    ['britannia', 'rocket', 140, 38.5, 1],
-    ['britannia', 'light', 141.4, 43, 1],
-    // Euro Britannia's knights, exiled from Europe, stage on the Atlantic coast for a crossing.
-    ['britannia', 'heavy', -75, 40, 2, 'shin'],
-    ['britannia', 'medium', -71, 42, 2, 'julius'],
-    ['britannia', 'raider', -69, 44.5, 2, 'ashley'],
-    ['britannia', 'siege', -77, 37, 1],
-    ['britannia', 'heavy', -79, 35, 1],
-    ['britannia', 'medium', -81, 32, 2],
-    ['britannia', 'assault', -76, 43, 2],
-    ['britannia', 'rocket', -73, 45, 1],
+    ['britannia', 'heavy', 142, 44.9866667, 2],
+    ['britannia', 'medium', 141, 43.28, 2],
+    ['britannia', 'light', -150, 62.0533333, 2],
+    ['britannia', 'medium', 145, 43.28, 2],
+    ['britannia', 'light', 120, 17.68, 2],
+    ['britannia', 'rocket', 140, 41.5733333, 1],
+    ['britannia', 'scout', -147, 63.76, 2],
+    ['britannia', 'light', 122, 17.68, 2],
+    ['britannia', 'scout', 121, 12.56, 1],
+    ['britannia', 'support', 123, 12.56, 1],
+    ['britannia', 'scout', 125, 12.56, 1],
+    ['britannia', 'super', 139, 36.4533333, 1, 'suzaku'],
+    ['britannia', 'heavy', 136, 34.7466667, 2, 'cornelia'],
+    ['britannia', 'medium', 131, 33.04, 2, 'lelouch'], // 2017: Lelouch starts in Japan (Fukuoka), not China.
+    ['britannia', 'rocket', 140, 38.16, 1],
+    ['britannia', 'light', 143, 43.28, 1],
+    // Britannian knights formerly stationed on the Atlantic coast reinforce Area 11 and the Philippines.
+    ['britannia', 'heavy', 141, 39.8666667, 2, 'shin'],
+    ['britannia', 'medium', 137, 36.4533333, 2, 'julius'],
+    ['britannia', 'raider', 141, 36.4533333, 2, 'ashley'],
+    ['britannia', 'siege', 132, 34.7466667, 1],
+    ['britannia', 'heavy', 122, 10.8533333, 1],
+    ['britannia', 'medium', 124, 10.8533333, 2],
+    ['britannia', 'assault', 134, 34.7466667, 2],
+    ['britannia', 'rocket', 123, 9.1466667, 1],
     // The E.U.'s Russian, Siberian and Balkan garrisons.
     ['eu', 'heavy', 30.3, 59.9, 2],
     ['eu', 'medium', 37.6, 55.7, 2],
@@ -375,9 +375,11 @@
     ['eu', 'scout', 60.6, 56.8, 1],
     ['eu', 'scout', 82.9, 55, 1],
     ['eu', 'scout', 104, 52.3, 1],
-    ['britannia', 'scout', 121, 14.6, 2],
+    ['britannia', 'scout', 122, 14.2666667, 2],
     ['britannia', 'light', -158, 21.3, 1],
-    ['britannia', 'scout', 174.8, -36.9, 1],
+    ['britannia', 'scout', -51, 63.76, 1],
+    // E.U. northern Atlantic garrison.
+    ['eu', 'medium', -20, 65.4666667, 2], // Iceland garrison at (79,5), beside Reykjavik
     // Europia United: Paris, Britain, the eastern front (wZERO), Scandinavia, the Balkans and Africa.
     ['eu', 'super', 2.35, 48.85, 1, 'smilas'],
     ['eu', 'heavy', 4, 49.5, 2],
@@ -432,17 +434,17 @@
     ['cf', 'scout', 100.5, 13.7, 1],
     ['cf', 'scout', 124.2, 24.1, 1],
 
-    // High-resolution front-line reinforcement pass: concentrate forces in actual theatres rather than filling every city.
-    // Britannia: North American coasts, South America, the Pacific and Area 11.
-    ['britannia', 'light', -122.4, 37.8, 2],
-    ['britannia', 'medium', -118.2, 34.1, 2],
-    ['britannia', 'heavy', -79.4, 43.7, 2],
-    ['britannia', 'rocket', -63.6, 44.6, 1],
-    ['britannia', 'medium', -46.6, -23.5, 2],
-    ['britannia', 'light', -66.9, 10.5, 1],
-    ['britannia', 'assault', 135.8, 35.0, 2],
-    ['britannia', 'raider', 130.4, 33.6, 2],
-    ['britannia', 'medium', 121, 14.6, 2],
+    // High-resolution front-line roster, concentrated in the Pacific for 2017 Britannia.
+    // Britannia: the remaining Pacific-front contingents and northern outposts.
+    ['britannia', 'light', 125, 9.1466667, 2],
+    ['britannia', 'medium', 122, 7.44, 2],
+    ['britannia', 'heavy', 124, 7.44, 2],
+    ['britannia', 'rocket', -48, 65.4666667, 1],
+    ['britannia', 'medium', 126, 7.44, 2],
+    ['britannia', 'light', 125, 5.7333333, 1],
+    ['britannia', 'assault', 138, 34.7466667, 2],
+    ['britannia', 'raider', 133, 33.04, 2],
+    ['britannia', 'medium', 121, 15.9733333, 2],
     ['britannia', 'light', -157.9, 21.3, 2],
 
     // E.U.: the Atlantic wall, central/eastern Europe, Mediterranean, Africa and Siberia.
@@ -565,9 +567,9 @@
     ['Dubai', 2],
   ];
   const NAVY_DATA = [
-    ['britannia', 'carrier', -158, 20.5, 1], ['britannia', 'carrier', -71, 39.5, 1], ['britannia', 'carrier', 135, 33, 1], ['britannia', 'carrier', -124, 37.5, 1],
+    ['britannia', 'carrier', -158, 20.5, 1], ['britannia', 'carrier', -71, 39.5, 1], ['britannia', 'carrier', 135, 33, 1], ['britannia', 'carrier', -160, 23.5, 1],
     ['britannia', 'amphibious2', 131, 32.5, 1], ['britannia', 'amphibious', 141, 36, 2], ['britannia', 'amphibious', -157, 19.5, 2],
-    ['britannia', 'amphibious', -79, 25, 2], ['britannia', 'amphibious2', -79, 8, 1], ['britannia', 'amphibious', -120, 33, 2],
+    ['britannia', 'amphibious', -162, 21, 2], ['britannia', 'amphibious2', -79, 8, 1], ['britannia', 'amphibious', -154, 23, 2],
     ['eu', 'carrier', 2, 53, 1], ['eu', 'carrier', -6, 35.5, 1], ['eu', 'carrier', 4, 40.5, 1], ['eu', 'carrier', 25, 37, 1],
     ['eu', 'amphibious', -2, 50, 2], ['eu', 'amphibious', -5, 45, 2], ['eu', 'amphibious2', 10, 38, 1],
     ['eu', 'amphibious', 24, 39, 2], ['eu', 'amphibious', 18, 56, 2], ['eu', 'amphibious2', -18, 14, 1],
