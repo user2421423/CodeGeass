@@ -751,6 +751,7 @@ const GEOGRAPHY = (() => {
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
+  // Offmap territory is not a neutral country: it is outside this scenario's playable theatre.
   // The active geographic map is the playable land plus the SAME short
   // coastal colour buffer used by the political painter. It must never be
   // the whole GSHHG atlas: continental polygons extend far beyond a small
