@@ -182,7 +182,7 @@ jobs:
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js dist/scenarios-luoyang.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js dist/scenarios-luoyang.js dist/scenarios-eu-cf-luoyang.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
