@@ -199,7 +199,7 @@
     if (kind === 'farneseWithdrawal') return g.units.some(v =>
       v.hp > 0 && v.side === u.side && dist(g,u,v) <= 3 &&
       v.hp < maxHP(v) * 0.5) ? [u] : [];
-    if (kind === 'manfrediRequisition') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=2&&!TYPES[v.type].elite&&v.stack<3);
+    if (kind === 'manfrediRequisition') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&!isAir(v)&&!isShip(v)&&dist(g,u,v)<=2&&!TYPES[v.type].elite&&v.stack<3);
     if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
