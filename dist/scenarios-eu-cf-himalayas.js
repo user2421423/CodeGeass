@@ -195,7 +195,7 @@ function create(player='eu',difficulty='normal',seed=20261019){
     [resource,Math.round(n)-base[resource]]));
   const actual=E.income(g,side);
   for(const resource of Object.keys(FUNDING[side]))
-   g.economy[side][resource]=({"eu":{"credits":2000,"industry":500,"science":192},"cf":{"credits":2000,"industry":500,"science":204}}[side]||{})[resource] ?? (actual[resource]*2);
+   g.economy[side][resource]={"eu":{"credits":2000,"industry":500,"science":192,"sakuradite":110},"cf":{"credits":2000,"industry":500,"science":204,"sakuradite":116}}[side][resource];
  }
  if(difficulty==='hard'||difficulty==='challenge'){
   for(const side of SIDES.filter(s=>s!==player))
