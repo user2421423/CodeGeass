@@ -1,0 +1,70 @@
+name: Build North Africa foreign landmask
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/build_north_africa_foreign_mask.py'
+      - '.github/workflows/build-north-africa-foreign-land.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: north-africa-foreign-land-main
+  cancel-in-progress: false
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch geographic reference
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson \
+            -o /tmp/north-africa-countries.geojson
+          curl --fail --location --retry 3 --silent --show-error \
+            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
+            -o /tmp/natural-earth-land.geojson
+      - name: Rasterize foreign land into the scenario
+        run: python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
+      - name: Rebuild and audit every scenario before pushing
+        run: |
+          node tools/build_sources.cjs
+          node tools/audit_all_scenario_hexes.cjs /tmp/natural-earth-land.geojson
+          node - <<'NODE'
+          const E=require('./dist/engine.js');
+          require('./tools/scenario_sim.cjs');
+          const m=E.scenarios.byId['cf-eu-north-africa'];
+          for(const side of m.sides){
+            const g=m.create(side,'normal',20261022);
+            const offmap=g.tiles.filter(t=>t.terrain==='offmap').length;
+            const ownedOffmap=g.tiles.filter(t=>t.terrain==='offmap'&&t.owner!==null).length;
+            const illegalShips=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            if(offmap<200||ownedOffmap||illegalShips.length)
+              throw Error('North African foreign land/naval check '+JSON.stringify({side,offmap,ownedOffmap,illegalShips:illegalShips.length}));
+            console.log('NORTH_AFRICA_FOREIGN_LAND '+JSON.stringify({side,offmap,ports:g.stations.filter(s=>s.portAt).length}));
+          }
+          NODE
+      - name: Commit verified landmask to main
+        run: |
+          git add dist/scenarios-cf-eu-north-africa.js
+          if git diff --cached --quiet; then
+            echo 'Foreign landmask already current.'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "Use Natural Earth foreign Mediterranean landmask in North African scenario"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
