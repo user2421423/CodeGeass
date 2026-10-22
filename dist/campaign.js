@@ -458,6 +458,7 @@
     for (const spec of m.units) placeUnit(g, spec);
     addDifficultyReinforcements(g, d);
     fire(g, ev => ev.turn === 1 || ev.start);
+    E.standardizeCities(g);
     return g;
   }
 
