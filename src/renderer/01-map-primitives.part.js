@@ -381,44 +381,47 @@ function readyUnit(u) {
 // Hearts of Iron-style map counters are deliberately limited to strategic zoom.
 // The tactical formation art, hover/selection logic and saved unit data are unchanged.
 function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi, spent, group, groupColor, focusedGroup) {
-  // Draw in screen pixels so country standards and strength remain legible as the map zooms out.
+  // Strategic counter dimensions are in SCREEN pixels, not world coordinates.
+  // Small, flat silhouettes are less likely to obscure neighbors in dense theaters.
   ctx.save();
   ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
-  const w = scale < 0.12 ? 30 : scale < 0.22 ? 38 : 46;
-  const h = scale < 0.12 ? 14 : scale < 0.22 ? 16 : 19;
+  const w = scale < 0.12 ? 26 : scale < 0.22 ? 31 : 36;
+  const h = scale < 0.12 ? 14 : scale < 0.22 ? 16 : 18;
   const x = -w / 2, y = -h / 2;
   const player = u.side === game.player;
   const allied = !player && u.side !== 'neutral' && !hostileUnit(u);
   const faction = unitFactionDotColor(game, u);
-  const accent = selected || multi ? '#ffe19b'
-    : focusedGroup && group && focusedGroup.id === group.id ? groupColor
-    : player ? '#edc675' : allied ? '#94e5ff' : faction;
-  const hp = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
-  ctx.globalAlpha = spent && !selected && !multi ? 0.76 : 1;
-  if (selected || multi || readyUnit(u)) {
-    ctx.shadowColor = '#ffcf73';
-    ctx.shadowBlur = selected || multi ? 9 : 4 + 2 * Math.sin(time / 210);
-  }
-  // HOI4-inspired dark metal counter with one faction-coloured perimeter.
-  ctx.fillStyle = '#060d16';
-  ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-  ctx.fillStyle = '#192734';
-  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = selected || multi ? 2 : 1.35;
-  ctx.strokeRect(x - 0.75, y - 0.75, w + 1.5, h + 1.5);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = accent;
-  ctx.fillRect(x + 1, y + 1, w - 2, 2);
+  const focused = !!(focusedGroup && group && focusedGroup.id === group.id);
+  const highlighted = selected || multi;
+  const outline = highlighted ? '#ffe7a4' : focused ? groupColor : allied ? '#7b99ae' : '#4c5662';
 
-  // Use the game's real faction flag artwork, not recreated coloured dots.
-  // Clipping hides ART.drawFlag's banner pole and keeps square standards contained.
+  // Quiet, HOI4-inspired military tile: one crisp edge, no normal/ready glow,
+  // no HP strip, stack number, strength text or extra dot/ring.
+  ctx.globalAlpha = spent && player && !highlighted ? 0.84 : 1;
+  ctx.fillStyle = '#0b121b';
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = '#252d35';
+  ctx.fillRect(x, y, w, h);
+  if (highlighted) {
+    ctx.shadowColor = '#ffdc83';
+    ctx.shadowBlur = 4;
+  }
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = highlighted ? 1.6 : 0.9;
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  ctx.shadowBlur = 0;
+  // Restrained faction strip helps distinguish similar standards at a glance.
+  ctx.fillStyle = faction;
+  ctx.fillRect(x + 1.3, y + 1.3, 1.5, h - 2.6);
+
   const flagSide = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
     ? 'ufn' : artSide(u.side);
-  const flagW = Math.round(w * 0.34), flagH = h - 7;
-  const flagX = x + 3, flagY = y + 4;
-  ctx.fillStyle = PLATE[artSide(u.side)]?.mid || faction;
+  const flagW = scale < 0.12 ? 10 : 12;
+  const flagH = h - 5;
+  const flagX = x + 4, flagY = y + (h - flagH) / 2;
+  ctx.fillStyle = PLATE[artSide(u.side)]?.mid || '#444b53';
   ctx.fillRect(flagX, flagY, flagW, flagH);
+  // Clip ART.drawFlag's pole; reuse the authentic game standards.
   ctx.save();
   ctx.beginPath();
   ctx.rect(flagX, flagY, flagW, flagH);
@@ -426,60 +429,53 @@ function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi
   const hasFlag = ART.drawFlag(ctx, flagSide, flagX, flagY, flagW);
   ctx.restore();
   if (!hasFlag) {
-    ctx.fillStyle = '#fff2db';
-    ctx.font = `bold ${Math.max(8, h - 7)}px sans-serif`;
+    ctx.fillStyle = '#f8f4e7';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.font = 'bold 8px sans-serif';
     ctx.fillText(F(u.side).letter || '?', flagX + flagW / 2, flagY + flagH / 2);
   }
-  ctx.strokeStyle = '#d6e3f0a6';
+  ctx.strokeStyle = '#c0ced477';
   ctx.lineWidth = 0.6;
-  ctx.strokeRect(flagX, flagY, flagW, flagH);
+  ctx.strokeRect(flagX + 0.3, flagY + 0.3, flagW - 0.6, flagH - 0.6);
 
-  // A tiny military branch pictogram plus formation stack count.
-  const sx = flagX + flagW + 5, sy = y + 5, sh = h - 9, sw = Math.max(7, w - flagW - 21);
-  ctx.strokeStyle = '#e8edf1';
-  ctx.lineWidth = 1.2;
+  // Simplified NATO military symbol. No strength/stack count: the entire
+  // right half is reserved for the branch pictogram.
+  const iw = Math.max(8, w - flagW - 9);
+  const ih = Math.max(7, h - 7);
+  const ix = x + w - iw - 3, iy = y + (h - ih) / 2;
+  ctx.strokeStyle = '#e4e9eb';
+  ctx.lineWidth = 1.15;
   ctx.beginPath();
   if (type.air) {
-    ctx.moveTo(sx, sy + sh); ctx.lineTo(sx + sw / 2, sy);
-    ctx.lineTo(sx + sw, sy + sh); ctx.moveTo(sx + 1, sy + sh * 0.58);
-    ctx.lineTo(sx + sw - 1, sy + sh * 0.58);
+    ctx.moveTo(ix, iy + ih); ctx.lineTo(ix + iw / 2, iy);
+    ctx.lineTo(ix + iw, iy + ih);
+    ctx.moveTo(ix + 1, iy + ih * 0.65); ctx.lineTo(ix + iw - 1, iy + ih * 0.65);
   } else if (type.naval === 'ship') {
-    ctx.moveTo(sx, sy + sh * 0.55); ctx.lineTo(sx + sw, sy + sh * 0.55);
-    ctx.moveTo(sx + 2, sy + sh * 0.25); ctx.lineTo(sx + sw - 2, sy + sh * 0.25);
-    ctx.moveTo(sx + 1, sy + sh * 0.85); ctx.lineTo(sx + sw - 1, sy + sh * 0.85);
+    ctx.moveTo(ix, iy + ih * 0.52); ctx.lineTo(ix + iw, iy + ih * 0.52);
+    ctx.moveTo(ix + 1, iy + ih * 0.8); ctx.lineTo(ix + iw - 1, iy + ih * 0.8);
+    ctx.moveTo(ix + iw / 2, iy); ctx.lineTo(ix + iw / 2, iy + ih * 0.52);
   } else if (type.branch === 'Armor') {
-    ctx.ellipse(sx + sw / 2, sy + sh / 2, sw / 2, sh / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(ix + iw / 2, iy + ih / 2, iw / 2, ih / 2, 0, 0, Math.PI * 2);
   } else if (type.branch === 'Artillery') {
-    ctx.arc(sx + sw / 2, sy + sh / 2, Math.max(2, Math.min(sw, sh) / 3), 0, Math.PI * 2);
+    ctx.arc(ix + iw / 2, iy + ih / 2, Math.min(iw, ih) * 0.33, 0, Math.PI * 2);
   } else {
-    ctx.moveTo(sx, sy); ctx.lineTo(sx + sw, sy + sh);
-    ctx.moveTo(sx + sw, sy); ctx.lineTo(sx, sy + sh);
+    ctx.moveTo(ix, iy); ctx.lineTo(ix + iw, iy + ih);
+    ctx.moveTo(ix + iw, iy); ctx.lineTo(ix, iy + ih);
   }
   ctx.stroke();
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#f9f4e8';
-  ctx.font = `bold ${h < 17 ? 10 : 12}px 'Trebuchet MS', sans-serif`;
-  ctx.fillText(String(u.stack || 1), x + w - 7, y + h / 2 + 0.4);
-  // Fine bottom bar: one bar per counter, proportional to remaining HP.
-  ctx.fillStyle = '#070c11';
-  ctx.fillRect(x + 2, y + h - 2.5, w - 4, 1.8);
-  ctx.fillStyle = hp > 0.6 ? '#6fd8a4' : hp > 0.28 ? '#eebf61' : '#ff7b75';
-  ctx.fillRect(x + 2, y + h - 2.5, (w - 4) * hp, 1.8);
+
+  // A tiny integrated star, rather than a large floating star above the map.
   if (u.cmd) {
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillStyle = '#ffe7a2';
-    ctx.fillText('★', x + w / 2, y - 5);
-  }
-  if (group && player) {
-    ctx.fillStyle = groupColor;
-    ctx.font = 'bold 9px sans-serif';
-    ctx.fillText('G' + group.id, x + w - 6, y - 4);
+    ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#f2d288';
+    ctx.fillText('★', x + w - 1.5, y + 1);
   }
   ctx.restore();
 }
+
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
   const c = PLATE[artSide(side)],
