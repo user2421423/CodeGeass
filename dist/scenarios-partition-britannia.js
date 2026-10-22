@@ -162,7 +162,8 @@ const byNation=source=>Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].side=
 // rear-area formations to unreachable distant goals across the imperial front.
 // Local assault columns instead pursue accessible hostile cities, then retarget
 // after each capture. This is runtime AI metadata, not part of the save format.
-const api=common.define({id:'partition-britannia',title:'The Partition of Britannia',geography,owner,
+const api=common.define({
+ treasury:{"eu":{"credits":2000,"industry":500,"science":500,"sakuradite":15},"cf":{"credits":2000,"industry":500,"science":500,"sakuradite":15},"remnants":{"credits":2000,"industry":500,"science":500,"sakuradite":15}},id:'partition-britannia',title:'The Partition of Britannia',geography,owner,
  ai:{doctrine:'assault'},
  intro:'Britannia still controls the North American heartland, from the Canadian Prairies through the Great Plains and Texas. Europia United occupies the Atlantic states and eastern Canada, while the Chinese Federation holds the Pacific coast and western Canada. All three powers fight for total conquest.',
  terrain:'United States and Canada only, from the southern border to 70°N. Alaska is omitted; no Mexico, Greenland or Caribbean territory. Real country boundaries and Great Lakes; Rocky Mountain routes remain passable.',
