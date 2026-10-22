@@ -15,6 +15,7 @@ on:
       - 'tools/patch_greenland_mask.py'
       - 'tools/build_greenland_foreign_mask.py'
       - 'tools/audit_all_scenario_variants.cjs'
+      - 'tools/build_luoyang_bohai_mask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -57,6 +58,7 @@ jobs:
           python3 tools/build_india_northeast_land.py /tmp/natural-earth-land.geojson
           python3 tools/patch_greenland_mask.py
           python3 tools/build_greenland_foreign_mask.py /tmp/north-africa-countries.geojson
+          python3 tools/build_luoyang_bohai_mask.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -169,16 +171,23 @@ jobs:
               throw Error('Greenland Canadian Arctic exclusion check '+JSON.stringify({side,off,occupiedOff,badShips:badShips.length,ports}));
             console.log('GREENLAND_ARCTIC_LAND '+JSON.stringify({side,off,ports}));
           }
+          for(const id of ['battle-luoyang','chinese-civil-war','eu-cf-luoyang']){
+            const scenario=E.scenarios.byId[id];
+            const g=scenario.create(scenario.sides[0],'normal',20261022);
+            const sea=g.tiles.filter(t=>t.terrain==='sea').length;
+            if(sea<=164)throw Error('Bohai shoreline correction missing in '+id+': '+sea);
+            console.log('LUOYANG_BOHAI_CONFIRMED '+JSON.stringify({id,sea}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js dist/scenarios-luoyang.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Exclude Canadian Arctic land from Greenland naval theatre after full terrain audit"
+            git commit -m "Restore actual Bohai Sea water in Luoyang and derived scenarios"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
