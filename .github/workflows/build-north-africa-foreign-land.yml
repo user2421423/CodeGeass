@@ -9,6 +9,7 @@ on:
       - 'tools/build_france_foreign_mask.py'
       - 'tools/build_beijing_landmask.py'
       - 'tools/build_korea_foreign_mask.py'
+      - 'tools/build_caucasus_watermask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -39,6 +40,9 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error \
             https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
             -o /tmp/natural-earth-land.geojson
+          curl --fail --location --retry 3 --silent --show-error \
+            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_lakes.geojson \
+            -o /tmp/natural-earth-lakes.geojson
       - name: Rasterize foreign land into North Africa, Suez and France
         run: |
           python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
@@ -46,6 +50,7 @@ jobs:
           python3 tools/build_france_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_beijing_landmask.py /tmp/natural-earth-land.geojson
           python3 tools/build_korea_foreign_mask.py /tmp/north-africa-countries.geojson
+          python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson /tmp/natural-earth-lakes.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -107,16 +112,30 @@ jobs:
               throw Error('Korea foreign mainland check '+JSON.stringify({side,outside,owned,illegalShips:illegalShips.length}));
             console.log('KOREA_FOREIGN_MAINLAND '+JSON.stringify({side,outside,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const caucasus=E.scenarios.byId['cf-eu-caucasus'];
+          for(const side of caucasus.sides){
+            const g=caucasus.create(side,'normal',20261022);
+            const basins=new Set(g.tiles.filter(t=>t.terrain==='sea').map(t=>t.waterBasin));
+            const invalid=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            const correct=g.stations.filter(s=>s.portAt).every(s=>{
+              const t=E.tile(g,s.portAt.c,s.portAt.r);
+              return (['Batumi','Poti','Sochi','Tuapse','Novorossiysk'].includes(s.name)?'black-sea':'caspian')===t.waterBasin;
+            });
+            if(!basins.has('caspian')||!basins.has('black-sea')||invalid.length||!correct)
+              throw Error('Caucasus split sea basin check '+JSON.stringify({side,basins:[...basins],illegalShips:invalid.length,portsCorrect:correct}));
+            console.log('CAUCASUS_SEA_BASINS '+JSON.stringify({side,sea:g.tiles.filter(t=>t.terrain==='sea').length,coast:g.tiles.filter(t=>t.terrain==='coast').length,ports:g.stations.filter(s=>s.portAt).length}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Correct sampled Bohai coastline and Korean foreign mainland terrain"
+            git commit -m "Fix Korea foreign land and both Caucasus sea basins using independent geography"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
