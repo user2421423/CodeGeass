@@ -191,6 +191,9 @@
       return true;
     }
     if (cargo.length) job.wait++;
+    // A fully loaded carrier with only freshly boarded troops must wait for
+    // the next turn, not sail back toward more troops it cannot take aboard.
+    if (!readyCargo.length && cargo.length >= carrierCapacity(g, u)) return true;
     const riders = g.units.filter(
       v => v.hp > 0 && v.side === u.side && !memo.guards?.[v.id] && (!cargo.length || sameLift(frontOf(g, memo, v), bound)) && wantsLift(g, v, memo),
     );
