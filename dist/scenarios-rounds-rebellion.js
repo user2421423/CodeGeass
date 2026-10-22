@@ -3,6 +3,7 @@
 const define=root.KNIGHTMARE_ALT_HISTORY?.define||
  (typeof require==='function'?require('./scenarios-alternate-common.js').define:null);
 define({
+ openingTreasury:{"rounds":{"credits":2000,"industry":500,"science":500,"sakuradite":160},"britannia":{"credits":2000,"industry":500,"science":500,"sakuradite":196}},
  id:'rounds-rebellion',parent:'eu-pendragon',title:'Knights of the Round Rebellion',
  phase:'imperial-succession-war',
  map:{eu:'rounds',britannia:'britannia'},
