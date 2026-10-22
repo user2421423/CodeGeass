@@ -26,6 +26,20 @@
 
   // Replace scripted recurring subsidies with city-tier development. Scenario
   // starting cash remains authored; cityless expeditions retain finite reserves.
+  // Several legacy scenario constructors clamp negative funding to zero. That
+  // destroys the original target once standardized city output exceeds it.
+  // Preserve their actual authored targets here rather than treating the
+  // inflated new income as the goal.
+  const REGIONAL_CREDIT_TARGETS = Object.freeze({
+    'cf-eu-france':{cf:880,eu:820},
+    'cf-eu-moscow':{cf:1080,eu:910},
+    'eu-cf-beijing':{eu:900,cf:1050},
+    'eu-cf-luoyang':{eu:1140,cf:1190},
+    'eu-cf-sichuan':{eu:890,cf:930},
+    'battle-luoyang':{britannia:1080,cf:1190},
+    'invasion-japan':{britannia:400,bk:300,cf:320},
+    'defense-japan':{bk:270,britannia:540},
+  });
   // Reconcile every regional battle against its authored credit targets using
   // *only* genuine city tiers. A fortress is always city level 4 with a battery;
   // demoting one removes its battery as well. Factories and labs are untouched.
@@ -153,7 +167,8 @@
         // During localization income() still includes the authored funding,
         // so this value is already the original target (do not add twice).
         const totalWithFunding=income(g,side);
-        targets[side]={credits:Math.round(totalWithFunding.credits)};
+        const explicit = REGIONAL_CREDIT_TARGETS[g.scenario.id]?.[side];
+        targets[side]={credits:explicit ?? Math.round(totalWithFunding.credits)};
       }
       if(!g.cityStandardMigrated)balanceScenarioTiers(g,targets);
       g.scenario.funding={};
