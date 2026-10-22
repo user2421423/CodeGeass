@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/audit_all_scenario_hexes.cjs'
       - '.github/workflows/all-scenario-hex-audit.yml'
+      - 'dist/scenarios*.js'
   workflow_dispatch:
 
 permissions:
