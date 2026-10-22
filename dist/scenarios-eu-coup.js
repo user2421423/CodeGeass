@@ -4,6 +4,7 @@
 const define=root.KNIGHTMARE_ALT_HISTORY?.define||
  (typeof require==='function'?require('./scenarios-alternate-common.js').define:null);
 define({
+ openingTreasury:{"junta":{"credits":1120,"industry":500,"science":240,"sakuradite":40},"eu":{"credits":1290,"industry":500,"science":288,"sakuradite":51}},
  id:'eu-military-coup',parent:'european-war',
  title:'E.U. Military Coup — Smilas vs Leila',phase:'eu-republican-restoration',
  // Smilas's junta seizes Paris and the western industrial core. In this
