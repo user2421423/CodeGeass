@@ -449,7 +449,7 @@ function create(player='eu',difficulty='normal',seed=201717){
    .map(([res,n])=>[res,Math.round(n)-base[res]]));
   const actual=E.income(g,side);
   for(const res of Object.keys(FUNDING[side]))
-   g.economy[side][res]=actual[res]*2;
+   g.economy[side][res]=({"eu":{"credits":2000,"industry":500,"science":360},"cf":{"credits":2000,"industry":500,"science":330}}[side]||{})[res] ?? (actual[res]*2);
  }
  if(difficulty!=='normal'&&difficulty!=='elite'){
   for(const side of SIDES.filter(x=>x!==player))
