@@ -4,6 +4,7 @@ const E=root.Knightmare||(typeof require==='function'?require('./engine.js'):nul
 const define=root.KNIGHTMARE_EXCLUSIVE?.define||(typeof require==='function'?require('./scenarios-exclusive-common.js').define:null);
 
 const config={
+  treasury:{"zero_loyalists":{"credits":726,"industry":500,"science":183,"sakuradite":111},"bk_command":{"credits":1092,"industry":500,"science":270,"sakuradite":123}},
   "id": "bk-civil-war",
   "title": "Black Knights Civil War",
   "parent": "invasion-japan",
