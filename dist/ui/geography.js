@@ -18,13 +18,67 @@ const GEOGRAPHY = (() => {
   // Compile vector geometry only once instead of rebuilding detailed GSHHG
   // coast paths for each new camera tile. Node smoke tests use canvas fallback.
   const FAST_PATH = typeof Path2D !== 'undefined';
+  // The source coast remains the authority for geographic hit-testing and
+  // gameplay alignment. Only its drawn silhouette is cartographically cleaned.
+  // Narrow out-and-back polygon needles become huge triangular teeth at tactical
+  // zoom; replacing their tips must NOT introduce a crossing elsewhere in a ring.
+  function edgesCross(a, b, c, d) {
+    const cross = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) -
+      (q[1] - p[1]) * (r[0] - p[0]);
+    const ab1 = cross(a, b, c), ab2 = cross(a, b, d);
+    const cd1 = cross(c, d, a), cd2 = cross(c, d, b);
+    return ((ab1 > 1e-7 && ab2 < -1e-7) || (ab1 < -1e-7 && ab2 > 1e-7)) &&
+      ((cd1 > 1e-7 && cd2 < -1e-7) || (cd1 < -1e-7 && cd2 > 1e-7));
+  }
+  function safeCoastBridge(points, i) {
+    const n = points.length, a = points[(i + n - 1) % n],
+      b = points[(i + 1) % n];
+    const minX = Math.min(a[0], b[0]), maxX = Math.max(a[0], b[0]);
+    const minY = Math.min(a[1], b[1]), maxY = Math.max(a[1], b[1]);
+    for (let j = 0; j < n; j++) {
+      if (j === i || j === (i + n - 1) % n) continue;
+      const p = points[j], q = points[(j + 1) % n];
+      if (Math.max(p[0], q[0]) < minX || Math.min(p[0], q[0]) > maxX ||
+          Math.max(p[1], q[1]) < minY || Math.min(p[1], q[1]) > maxY) continue;
+      if (edgesCross(a, b, p, q)) return false;
+    }
+    return true;
+  }
+  function cleanCoastForDrawing(projected) {
+    let points = projected.slice();
+    // Repeated closing vertices and degenerate segments are common in GIS data.
+    if (points.length > 3 &&
+        Math.hypot(points[0][0] - points[points.length - 1][0],
+          points[0][1] - points[points.length - 1][1]) < 1e-5) points.pop();
+    for (let pass = 0; pass < 3 && points.length > 3; pass++) {
+      const remove = new Set(), n = points.length;
+      for (let i = 0; i < n; i++) {
+        const a = points[(i + n - 1) % n], b = points[i],
+          c = points[(i + 1) % n];
+        const armA = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        const armB = Math.hypot(c[0] - b[0], c[1] - b[1]);
+        const base = Math.hypot(a[0] - c[0], a[1] - c[1]);
+        // Suppress hairpin tips only when both sides double back on the same
+        // tiny base. Keep real bays, peninsulas, islands and broad bends.
+        if (Math.min(armA, armB) < R * 0.055 ||
+            base > Math.min(armA, armB) * 0.32 ||
+            !safeCoastBridge(points, i)) continue;
+        remove.add(i);
+      }
+      if (!remove.size || n - remove.size < 3) break;
+      points = points.filter((_, i) => !remove.has(i));
+    }
+    return points.length >= 3 ? points : projected;
+  }
   const shape = points => {
     const projected = points.map(project);
-    const item = { points: projected, bounds: bbox(projected) };
-    if (FAST_PATH && projected.length > 2) {
+    const displayPoints = cleanCoastForDrawing(projected);
+    const item = { points: projected, displayPoints, bounds: bbox(projected) };
+    if (FAST_PATH && displayPoints.length > 2) {
       const path = new Path2D();
-      path.moveTo(projected[0][0], projected[0][1]);
-      for (let i = 1; i < projected.length; i++) path.lineTo(projected[i][0], projected[i][1]);
+      path.moveTo(displayPoints[0][0], displayPoints[0][1]);
+      for (let i = 1; i < displayPoints.length; i++)
+        path.lineTo(displayPoints[i][0], displayPoints[i][1]);
       path.closePath();
       item.path = path;
     }
@@ -38,26 +92,12 @@ const GEOGRAPHY = (() => {
       kind, intensity, ...shape(points),
     })),
   };
-  // Overview geometry is simplified to sub-pixel accuracy at world zoom.
-  // The full GSHHG coastline remains intact for detailed zoom levels.
-  function simplifyForOverview(shape) {
-    const input = shape.points;
-    if (input.length <= 6) return shape;
-    const sampled = [input[0]];
-    let last = input[0];
-    const thresholdSq = 7 * 7; // under two screen pixels at overview resolution
-    for (let i = 1; i < input.length - 1; i++) {
-      const p = input[i];
-      if ((p[0] - last[0]) ** 2 + (p[1] - last[1]) ** 2 >= thresholdSq) {
-        sampled.push(p);
-        last = p;
-      }
-    }
-    sampled.push(input[input.length - 1]);
-    return { points: sampled.length >= 3 ? sampled : input.slice(0, 3), bounds: shape.bounds };
-  }
-  const OVERVIEW_LAND = LAYERS.land.map(simplifyForOverview);
-  const OVERVIEW_WATER = LAYERS.water.map(simplifyForOverview);
+  // Use the SAME cleaned vector paths at all zoom levels. The old distance-
+  // sampled overview rings could bridge bays, self-intersect, and then visibly
+  // jump to a different shoreline when zooming into the tactical atlas.
+  // The inexpensive cached overview bitmap still supplies distant-map LOD.
+  const OVERVIEW_LAND = LAYERS.land;
+  const OVERVIEW_WATER = LAYERS.water;
   function intersects(bounds, left, right, top, bottom) {
     return bounds[0] <= right && bounds[2] >= left && bounds[1] <= bottom && bounds[3] >= top;
   }
@@ -80,13 +120,13 @@ const GEOGRAPHY = (() => {
           // Overview polygons are simplified without precompiled paths.
           // They must be appended to the Path2D we actually fill/clip;
           // writing them into ctx made the overview land disappear.
-          const pts = s.points;
+          const pts = s.displayPoints || s.points;
           if (pts.length < 3) continue;
           combined.moveTo(pts[0][0], pts[0][1]);
           for (let i = 1; i < pts.length; i++) combined.lineTo(pts[i][0], pts[i][1]);
           combined.closePath();
         }
-      } else polygon(ctx, s.points);
+      } else polygon(ctx, s.displayPoints || s.points);
       count++;
     }
     return count ? (compiled ? combined : true) : null;
@@ -436,25 +476,54 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
-  // GIS coastline patches are clipped to rectangular source windows. Drawing
-  // every ring edge as coast would turn those artificial crop borders into
-  // ruler-straight shorelines across open water (e.g. the Mediterranean).
-  function coast(ctx, polygons, left, right, top, bottom, scale, crop = null) {
-    if (!FAST_PATH) {
-      ctx.beginPath();
-      for (const p of polygons) if (intersects(p.bounds, left, right, top, bottom)) {
-        polygon(ctx, p.points);
-      }
-      ctx.strokeStyle = 'rgba(226,233,216,0.66)';
-      ctx.lineWidth = 1 / Math.max(scale, 0.5);
-      ctx.stroke();
-      return;
+  // Stroke ONLY actual local shore segments. Closing a GIS polygon while
+  // stroking it drew artificial crop/dateline boundaries and very long chords
+  // across continents. The fill remains closed, but the coastal outline does
+  // not draw those connecting edges.
+  const COAST_MAX_SEGMENT = R * 1.8;
+  const COAST_CROP_EPS = R * 0.012;
+  function visibleCoastEdge(a, b) {
+    const length = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (length < 1e-5 || length > COAST_MAX_SEGMENT) return false;
+    const cropLine = (axis, n) => Math.abs(a[axis] - n) < COAST_CROP_EPS &&
+      Math.abs(b[axis] - n) < COAST_CROP_EPS;
+    // The world atlas is cropped at these meridians and latitudes; those
+    // straight cuts are not physical shorelines.
+    if (cropLine(0, px(-180)) || cropLine(0, px(180)) ||
+        cropLine(1, py(74)) || cropLine(1, py(-54))) return false;
+    return true;
+  }
+  function coastOutline(p) {
+    if (p.coastOutline !== undefined) return p.coastOutline;
+    const pts = p.displayPoints || p.points, n = pts.length;
+    const outline = FAST_PATH ? new Path2D() : [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      if (!visibleCoastEdge(a, b)) continue;
+      if (FAST_PATH) {
+        outline.moveTo(a[0], a[1]);
+        outline.lineTo(b[0], b[1]);
+      } else outline.push([a, b]);
     }
-    const result = paths(ctx, polygons, left, right, top, bottom);
-    if (!result) return;
+    p.coastOutline = outline;
+    return outline;
+  }
+  function coast(ctx, polygons, left, right, top, bottom, scale) {
     ctx.strokeStyle = 'rgba(226,233,216,0.66)';
     ctx.lineWidth = 1 / Math.max(scale, 0.5);
-    result === true ? ctx.stroke() : ctx.stroke(result);
+    // Outlines are precomputed once per polygon, never re-traced from the raw
+    // closed fill path on each camera move or atlas chunk repaint.
+    if (!FAST_PATH) ctx.beginPath();
+    for (const p of polygons) {
+      if (!intersects(p.bounds, left, right, top, bottom)) continue;
+      const outline = coastOutline(p);
+      if (FAST_PATH) ctx.stroke(outline);
+      else for (const [a, b] of outline) {
+        ctx.moveTo(a[0], a[1]);
+        ctx.lineTo(b[0], b[1]);
+      }
+    }
+    if (!FAST_PATH) ctx.stroke();
   }
 
   function paintBiomes(ctx, landShapes, left, right, top, bottom) {
