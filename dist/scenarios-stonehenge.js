@@ -423,16 +423,16 @@
     const afloat=g.units.filter(u=>u.side==='britannia'&&u.hp>0).length;
     return side==='eu'
       ? 'Hold the coast and destroy Britannia’s expedition ('+afloat+' hostile units afloat; '+britCities+' occupied cities).'
-      : 'Land troops from carriers and conquer all '+CITIES.length+' cities ('+euCities+' E.U. cities remain).';
+      : 'Land troops from carriers and capture or destroy all E.U. cities ('+euCities+' remain; '+(g.ruins||[]).length+' destroyed).';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='operation-stonehenge'||
-       g.stations.length!==CITIES.length)return null;
+       g.stations.length+(g.ruins||[]).length!==CITIES.length)return null;
     const eu=g.stations.some(s=>s.owner==='eu');
     const britCities=g.stations.some(s=>s.owner==='britannia');
     const britUnits=g.units.some(u=>u.side==='britannia'&&u.hp>0);
     if(!eu)return {winner:'britannia',team:'britannia',
-      reason:'Britannia has conquered every E.U. city in Western Europe.'};
+      reason:'Britannia has eliminated every E.U.-held city in Western Europe.'};
     if(!britCities&&!britUnits)return {winner:'eu',team:'eu',
       reason:'Europia United has destroyed every invading Britannian formation.'};
     return null;

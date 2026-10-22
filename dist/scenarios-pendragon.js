@@ -298,16 +298,16 @@ function strategicScore(g,side){
 function objective(g,side=g.player){
  const own=g.stations.filter(s=>s.owner===side).length;
  const remaining=g.stations.length-own;
- return 'Conquer all '+CITIES.length+' cities ('+own+' controlled; '+remaining+
-  ' remain). Pendragon is the imperial capital; the other fortresses and cities must also fall.';
+ return 'Capture or destroy every enemy city ('+own+' controlled; '+remaining+
+  ' other cities remain; '+(g.ruins||[]).length+' destroyed). Pendragon and the other fortresses must fall.';
 }
 function winner(g){
- if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length!==CITIES.length)return null;
+ if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length+(g.ruins||[]).length!==CITIES.length)return null;
  for(const side of SIDES)if(g.stations.every(s=>s.owner===side) &&
    (side===attacker || !E.allUnits(g).some(u=>u.side===attacker&&u.hp>0)))
   return {winner:side,team:side,reason:side===attacker?
    attackerVictory:
-   'The imperial capital and every city remain under Holy Britannian rule.'};
+   'The imperial capital and all surviving cities remain under Holy Britannian rule.'};
  return null;
 }
 const api={id:ID,title,cols:COLS,rows:ROWS,sides:SIDES,

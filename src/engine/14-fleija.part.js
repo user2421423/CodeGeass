@@ -323,7 +323,7 @@
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');
   }
-  // Ground zero destroys a city for the rest of the conquest: it stops being a city (no owner, output, port, project or
+  // Ground zero destroys a city for the rest of the battle: it stops being a city (no owner, output, port, project or
   // Eliminator charge, and it cannot be captured or rebuilt) and its deposit is lost. Its ruins stay on the map
   // (g.ruins) for the UI.
   function destroyCity(g, s) {
@@ -429,18 +429,11 @@
       }
       if (s) {
         if (blastDistance === 0) {
-          if (finaleScenario(g)) {
-            // Regional finale victories require conquering *every* city. Do not
-            // delete a city (and make that victory impossible) after a strike.
-            // The ground-zero city loses all defenses and infrastructure instead.
-            ruin(g, s, Infinity);
-            s.attackedSinceRegen = true;
-            cities.push({ name: s.name, severity: 'ground', destroyed: false, owner: s.owner });
-          } else {
-            const lost = destroyCity(g, s);
-            if (lost) depleted.push(lost);
-            cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
-          }
+          // A direct hit permanently removes the city in every mode, including
+          // regional finales. Scenario victories count city ruins as eliminated.
+          const lost = destroyCity(g, s);
+          if (lost) depleted.push(lost);
+          cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
         } else if (ring) {
           ruin(g, s, 1);
           s.attackedSinceRegen = true;
