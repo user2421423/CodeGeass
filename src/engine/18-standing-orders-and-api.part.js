@@ -225,6 +225,8 @@
     cityDefenseHP,
     cityTierOf,
     cityTierCost,
+    standardizeCities,
+    balanceScenarioTiers,
     upgradeCityTier,
     scenarioCityDefenseHP,
     claim,
