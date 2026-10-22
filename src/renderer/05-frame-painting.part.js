@@ -359,8 +359,9 @@ function draw(time, dt) {
           ? Math.max(15, 6.5 / Math.max(scale, 0.05))
           : europeOverview ? Math.max(15, 5 / scale) : 15;
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        // Original faction-plate interior, not the bright political territory colour.
-        // This retains the familiar token appearance for every faction.
+        // The original faction plate is a single, solid military counter.
+        // At strategic zoom a non-player formation must NOT become a bullseye
+        // from stacked outlines or a second HP arc over its tiny center.
         ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
         if (readyUnit(u) || sel || multi) {
@@ -369,31 +370,26 @@ function draw(time, dt) {
           ctx.shadowColor = `rgba(255,210,108,${(sel || multi ? 0.92 : 0.7) * pulse})`;
           ctx.shadowBlur = sel || multi ? 12 : 9;
         }
-        const integrity = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
-        ctx.strokeStyle = '#0c1924e0';
-        ctx.lineWidth = scenarioOverview
-          ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
-        ctx.stroke();
-        // Allies share the enemy's high-contrast treatment: one original
-        // faction-plate circle, no centre pip or second, adjacent faction dot.
-        // Keep the player's own marker exactly as before.
-        const nonPlayer = u.side !== game.player && u.side !== 'neutral';
-        if (nonPlayer) {
-          ctx.strokeStyle = '#fff4dc';
-          ctx.lineWidth = 4.5 / Math.max(scale, 0.05);
+        if (u.side !== game.player) {
+          // One crisp outline: dark over light territories, light at sea.
+          // Allies use a pale-blue edge so they remain distinct from enemies.
+          const allied = u.side !== 'neutral' && !hostileUnit(u);
+          ctx.strokeStyle = allied ? '#c0f1ff' : sea ? '#fff3dd' : '#0b1724';
+          ctx.lineWidth = (allied ? 1.9 : 2) / Math.max(scale, 0.05);
           ctx.stroke();
-          ctx.strokeStyle = '#081725';
-          ctx.lineWidth = 2.6 / Math.max(scale, 0.05);
+        } else {
+          // Preserve the player's original zoomed-out HP ring and emphasis.
+          const integrity = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
+          ctx.strokeStyle = '#0c1924e0';
+          ctx.lineWidth = scenarioOverview
+            ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
           ctx.stroke();
-        }
-        if (integrity > 0) {
-          ctx.beginPath();
-          ctx.arc(0, 0, u.side === game.player ? 15 : radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
-          ctx.strokeStyle = unitRingColor(u);
-          // The existing HP arc is painted on the SAME circle edge, not
-          // as a separate concentric ring.
-          if (nonPlayer) ctx.lineWidth = 2.25 / Math.max(scale, 0.05);
-          ctx.stroke();
+          if (integrity > 0) {
+            ctx.beginPath();
+            ctx.arc(0, 0, 15, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
+            ctx.strokeStyle = unitRingColor(u);
+            ctx.stroke();
+          }
         }
         ctx.shadowBlur = 0;
         // Gold commander pip distinguishes named officers from ordinary
