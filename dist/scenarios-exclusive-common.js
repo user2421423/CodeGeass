@@ -136,7 +136,7 @@ function define(config){
   g.mapRevision=(g.mapRevision||0)+1;E.log(g,config.intro,player);return g;
  }
  function objective(g,side=g.player){return 'Conquer every city ('+g.stations.filter(s=>s.owner===side).length+'/'+g.stations.length+'). Losing the last city eliminates a faction. No turn limit or alliances.';}
- function winner(g){if(g.scenario?.id!==config.id||g.stations.length!==cities.length)return null;
+ function winner(g){if(g.scenario?.id!==config.id)return null;
   const side=sides.find(side=>g.stations.every(s=>s.owner===side));
   return side?{winner:side,team:side,reason:E.FACTIONS[side].name+' controls every city.'}:null;}
  const api={...base,id:config.id,title:config.title,sides,cityData:cities,create,onTurn:()=>false,objective,winner};
