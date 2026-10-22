@@ -114,10 +114,11 @@ function define(config){
     const at=E.tile(g,s.portAt.c,s.portAt.r);
     if(at&&!E.unitAt(g,at))E.newUnit(g,E.NAVAL[g.scenario.equipment[side]].carrier,side,at.c,at.r,1);
    }
-   const rate=E.income(g,side),reserve=config.reserve?.[side]??3;
-   for(const resource of ['credits','industry','science','sakuradite'])g.economy[side][resource]=Math.round(rate[resource]*reserve);
+   // Starting stockpiles are authored per scenario, independent of recurring income.
+   const treasury=config.treasury?.[side];
+   if(!treasury)throw Error(config.id+' missing explicit starting treasury for '+side);
+   g.economy[side]={...treasury};
   }
-  for(const [side,treasury] of Object.entries(config.treasury||{}))Object.assign(g.economy[side],treasury);
   if(difficulty==='elite')E.prepareEliteEurope(g);
   else for(const u of g.units)if(u.side!==player)E.addDifficultyFrames(u,difficulty);
   E.applyScenarioDifficulty(g,difficulty);
