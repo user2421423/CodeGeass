@@ -441,7 +441,7 @@
         .map(([kind,amount])=>[kind,Math.round(amount)-base[kind]]));
       const current=E.income(g,side);
       for(const kind of Object.keys(FUNDING[side]))
-        g.economy[side][kind]=current[kind]*(side==='britannia'?3:2);
+        g.economy[side][kind]=({britannia:{credits:2000,industry:500,science:210},cf:{credits:1920,industry:500,science:140}}[side]||{})[kind] ?? current[kind]*(side==='britannia'?3:2);
     }
     if(['hard','challenge'].includes(difficulty)){
       const enemies=g.units.flatMap(u=>[u,...(u.cargo||[])]).filter(u=>
