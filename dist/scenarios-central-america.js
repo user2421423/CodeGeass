@@ -513,7 +513,7 @@
         Object.entries(FUNDING[side]).map(([k,v])=>[k,Math.round(v)-income[k]]));
       const actual=E.income(g,side);
       for(const kind of Object.keys(FUNDING[side]))
-        g.economy[side][kind]=({"cf":{"credits":2000,"industry":500,"science":315},"britannia":{"credits":2000,"industry":500,"science":204}}[side]||{})[kind] ?? (actual[kind] * ((side==='cf'?3:2)));
+        g.economy[side][kind]={"cf":{"credits":2000,"industry":500,"science":315,"sakuradite":195},"britannia":{"credits":2000,"industry":500,"science":204,"sakuradite":126}}[side][kind];
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       const enemies=g.units.flatMap(u=>[u,...(u.cargo||[])])
