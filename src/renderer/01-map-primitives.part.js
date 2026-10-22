@@ -391,7 +391,7 @@ function strategicFlagAspect(side) {
   return 2 / 3;
 }
 
-function drawStrategicDivisionCounter(u, scale, selected, crowded = 1) {
+function drawStrategicDivisionCounter(u, scale, selected) {
   ctx.save();
   // Consistent SCREEN-space footprints stop square flags from looking like
   // different-sized armies and keep all nation counters visually aligned.
@@ -404,15 +404,6 @@ function drawStrategicDivisionCounter(u, scale, selected, crowded = 1) {
   const bg = u.side === game.player ? '#455641'
     : allied ? '#43505a' : u.side === 'neutral' ? '#4e4d40' : '#39413f';
 
-  // In a busy theatre, use a two-plate stack instead of rendering dozens of
-  // flag textures on top of one another. The stack never claims a unit count.
-  if (crowded > 1) {
-    ctx.fillStyle = '#111c21';
-    ctx.fillRect(x + 2, y - 2, w, h);
-    ctx.strokeStyle = '#798487';
-    ctx.lineWidth = 0.65;
-    ctx.strokeRect(x + 2.5, y - 1.5, w - 1, h - 1);
-  }
   ctx.fillStyle = '#131a1c';
   ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
   ctx.fillStyle = bg;
@@ -447,62 +438,34 @@ function drawStrategicDivisionCounter(u, scale, selected, crowded = 1) {
   ctx.restore();
 }
 
-// HOI4-style screen-space decluttering at distant zoom. Compress only nearby
-// formations of the SAME faction, preserving frontlines and opponent flags.
-// No unit/save state is changed; normal unit selection still uses real hexes.
+// At every strategic zoom level, draw one counter per living formation.
+// Do not merge, cull or aggregate nearby same-faction formations: crowded
+// front lines are intentionally allowed to overlap for this preview.
+// Only the normal viewport check and world-wrap copies still apply.
 function drawStrategicOverviewFlags(units, scale, copies, visible, selection, selectedIds) {
-  const clusters = [];
-  const cells = new Map();
-  const stepX = scale < 0.12 ? 22 : scale < 0.22 ? 25 : 29;
-  const stepY = scale < 0.12 ? 15 : scale < 0.22 ? 17 : 19;
-
+  const selected = [];
   for (const u of units) {
     const pos = animatedPosition(u);
     if (!visible(pos)) continue;
-    const chosen = selection?.kind === 'unit' && selection.id === u.id ||
+    const chosen = (selection?.kind === 'unit' && selection.id === u.id) ||
       selectedIds.has(u.id);
+    const entries = chosen ? selected : null;
     for (const x of copies(pos.x)) {
-      const sx = x * scale, sy = pos.y * scale;
-      const col = Math.floor(sx / stepX), row = Math.floor(sy / stepY);
-      let entry = null;
-      for (let dc = -1; dc <= 1 && !entry; dc++)
-        for (let dr = -1; dr <= 1 && !entry; dr++) {
-          const key = u.side + ':' + (col + dc) + ',' + (row + dr);
-          for (const index of cells.get(key) || []) {
-            const other = clusters[index];
-            if (Math.abs(sx - other.sx) < stepX &&
-                Math.abs(sy - other.sy) < stepY) {
-              entry = other;
-              break;
-            }
-          }
-        }
-      if (entry) {
-        entry.count++;
-        // Keep an explicitly selected unit at its real position and on top.
-        if (chosen && !entry.selected) {
-          entry.u = u;
-          entry.x = x;
-          entry.y = pos.y;
-          entry.selected = true;
-        }
-        continue;
+      if (entries) {
+        // Draw selected formations on top so they are not obscured in crowds.
+        entries.push({ u, x, y: pos.y });
+      } else {
+        ctx.save();
+        ctx.translate(x, pos.y);
+        drawStrategicDivisionCounter(u, scale, false);
+        ctx.restore();
       }
-      const item = { u, x, y: pos.y, sx, sy, count: 1, selected: !!chosen };
-      const index = clusters.length;
-      clusters.push(item);
-      const key = u.side + ':' + col + ',' + row;
-      if (!cells.has(key)) cells.set(key, []);
-      cells.get(key).push(index);
     }
   }
-
-  // Selection is last so its border remains visible over nearby nations.
-  clusters.sort((a, b) => Number(a.selected) - Number(b.selected));
-  for (const cluster of clusters) {
+  for (const item of selected) {
     ctx.save();
-    ctx.translate(cluster.x, cluster.y);
-    drawStrategicDivisionCounter(cluster.u, scale, cluster.selected, cluster.count);
+    ctx.translate(item.x, item.y);
+    drawStrategicDivisionCounter(item.u, scale, true);
     ctx.restore();
   }
 }
