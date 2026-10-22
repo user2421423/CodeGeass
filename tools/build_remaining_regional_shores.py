@@ -69,18 +69,9 @@ def main():
             if all(not dry(lon+x*dx,lat+y*dy,polys) for x in (-.33,0,.33) for y in (-.33,0,.33)):
                 i=r*jcols+c;jmask[i>>3]|=128>>(i&7);jseas+=1
     if jseas<50 or jseas>1000:raise RuntimeError('Unexpected northern Japan open sea '+str(jseas))
-    func="""  function fixJapanVerifiedOpenSea(g){
-    let repaired=0;
-    for(const t of g.tiles){
-      const i=t.r*COLS+t.c;
-      if((JAPAN_CONFIRMED_OPEN_SEA.charCodeAt(i>>3)&(128>>(i&7)))&&t.terrain!=='sea'){
-        t.terrain='sea';repaired++;
-      }
-    }
-    g.scenario.northJapanSeaCorrections=repaired;
-  }"""
-    install('scenarios.js','JAPAN_CONFIRMED_OPEN_SEA',func,
-      ('    applyManualJapanTerrain(g);','    applyManualJapanTerrain(g);\n    fixJapanVerifiedOpenSea(g);'),jmask)
+    # The Japan base grid already classifies these verified open-water cells as
+    # water in its actual projection. Preserve the carefully audited coastline.
+    print('JAPAN_OPEN_WATER_REFERENCE',jseas)
     cols,rows=120,80
     emask=bytearray((cols*rows+7)//8);eland=0
     dx=60/cols;dy=38/rows
