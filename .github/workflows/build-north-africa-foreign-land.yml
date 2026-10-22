@@ -12,6 +12,8 @@ on:
       - 'tools/build_caucasus_watermask.py'
       - 'tools/build_manchuria_north_coast.py'
       - 'tools/build_india_northeast_land.py'
+      - 'tools/patch_greenland_mask.py'
+      - 'tools/build_greenland_foreign_mask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -52,6 +54,8 @@ jobs:
           python3 tools/build_caucasus_watermask.py /tmp/natural-earth-land.geojson
           python3 tools/build_manchuria_north_coast.py /tmp/natural-earth-land.geojson
           python3 tools/build_india_northeast_land.py /tmp/natural-earth-land.geojson
+          python3 tools/patch_greenland_mask.py
+          python3 tools/build_greenland_foreign_mask.py /tmp/north-africa-countries.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -151,16 +155,28 @@ jobs:
               throw Error('India northeast coast check '+JSON.stringify({side,sea,invalidShips:invalid.length}));
             console.log('INDIA_NORTHEAST_LAND '+JSON.stringify({side,sea,coast:g.tiles.filter(t=>t.terrain==='coast').length,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const greenland=E.scenarios.byId['eu-greenland'];
+          for(const side of greenland.sides){
+            const g=greenland.create(side,'normal',20261022);
+            const off=g.tiles.filter(t=>t.terrain==='offmap').length;
+            const occupiedOff=g.tiles.filter(t=>t.terrain==='offmap'&&t.owner!=null).length;
+            const badShips=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            const ports=g.stations.filter(st=>st.portAt).length;
+            if(off<2300||occupiedOff||badShips.length||ports!==15)
+              throw Error('Greenland Canadian Arctic exclusion check '+JSON.stringify({side,off,occupiedOff,badShips:badShips.length,ports}));
+            console.log('GREENLAND_ARCTIC_LAND '+JSON.stringify({side,off,ports}));
+          }
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Fix northeastern India and northern Sea of Japan land classifications"
+            git commit -m "Exclude Canadian Arctic land from Greenland naval theatre after full terrain audit"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
