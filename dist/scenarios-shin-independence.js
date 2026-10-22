@@ -3,6 +3,7 @@
 const define=root.KNIGHTMARE_ALT_HISTORY?.define||
  (typeof require==='function'?require('./scenarios-alternate-common.js').define:null);
 define({
+ openingTreasury:{"britannia":{"credits":1120,"industry":500,"science":240,"sakuradite":40},"shinregime":{"credits":1290,"industry":500,"science":288,"sakuradite":51}},
  id:'shin-independence',parent:'european-war',title:'Euro-Britannian Independence',
  phase:'shin-secession',
  map:{eu:'britannia',eb:'shinregime'},
