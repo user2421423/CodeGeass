@@ -321,16 +321,6 @@ function startLoadedScenario(id, side, difficulty, campaignContext) {
   scenarioKind=id; scenarioSide=side; scenarioDifficulty=difficulty;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
-  // Cap opening credits, industry and science for NEW regional battles, for every faction.
-  // Do not cap income per turn, Sakuradite, Conquest or restored saves.
-  // Apply at the scenario constructor entry point regardless of its mode/turn metadata.
-  // This single entry point also starts weekly and World Campaign operations.
-  if(game?.economy)for(const [faction,wallet] of Object.entries(game.economy)){
-    if(faction==='neutral'||!wallet)continue;
-    if(Number.isFinite(wallet.credits))wallet.credits=Math.min(wallet.credits,2000);
-    if(Number.isFinite(wallet.industry))wallet.industry=Math.min(wallet.industry,500);
-    if(Number.isFinite(wallet.science))wallet.science=Math.min(wallet.science,500);
-  }
   // All modes (standalone, weekly and world-campaign) share the same force limit.
   KnightmareScenarioForces.reduce(game);
   if (scenarioWeeklySelected && !campaignContext && id===weeklyScenarioCurrent().scenarioId) {
