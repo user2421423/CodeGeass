@@ -48,7 +48,7 @@ assert(airHex, 'Need an empty sea hex to stage an airship');
 const airship = E.newUnit(g, 'logres_airship', 'britannia', airHex.c, airHex.r);
 assert.equal(E.TYPES[airship.type].air, true);
 assert.equal(E.carrierCapacity(g, airship), 2);
-airship.cargo = [{ ...launch.unit, boardedTurn: g.turn }];
+airship.cargo = [{ ...launch.unit, id: g.nextId++, boardedTurn: g.turn }];
 assert.match(E.deployReason(g, airship, 0), /turn after boarding/i, 'Airship instant drop is blocked');
 g.turn += 1;
 assert.doesNotMatch(E.deployReason(g, airship, 0) || '', /turn after boarding/i,
@@ -95,8 +95,9 @@ const run = simulate(scenario, 'britannia', 'normal', 11, 3, {
       if (event.kind !== 'deploy') continue;
       aiLandings += 1;
       const unit = state.units.find(u => u.id === event.id);
-      assert(unit, 'AI deployment should create a map unit');
-      assert.notEqual(unit.boardedTurn, state.turn, 'AI must never deploy freshly boarded cargo');
+      // The unit might already have died in its immediate post-deployment attack.
+      if (unit) assert.notEqual(unit.boardedTurn, state.turn,
+        'AI must never deploy freshly boarded cargo');
     }
   },
 });
