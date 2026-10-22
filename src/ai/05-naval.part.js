@@ -113,7 +113,9 @@
       },
       danger = (p, grids = null) => grids ? grids.danger[p.r * g.cols + p.c] :
         g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
-      strength = readyCargo.reduce((a, c) => a + c.stack, 0),
+      // Plan a future beachhead with every passenger, even if some cannot
+      // disembark until the following turn. Actual launches check eligibility.
+      strength = cargo.reduce((a, c) => a + c.stack, 0),
       landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
         TYPES[v.type]?.capacity > 0 && v.cargo?.length),
       landing = (p, grids = null) => {
@@ -125,9 +127,8 @@
           (scenarioMeta(g).ai?.synchronizedFlotillas &&
            v.invasionGroup && v.invasionGroup === u.invasionGroup &&
            dist(g, v, u) <= 9))
-          .reduce((n, v) => n + v.cargo.filter(c => c.boardedTurn !== g.turn)
-            .reduce((a, c) => a + c.stack, 0), 0);
-        const scores = deployTargetsAt(g, p, u.side, readyCargo.length > 0)
+          .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
+        const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
           .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses, grids))
           .filter(v => v != null);
         return scores.length ? Math.min(...scores) + danger(p, grids) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
@@ -157,7 +158,13 @@
       followSea(ports.map(p => [p, 0]));
       return true;
     }
-    if (readyCargo.length && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3)) {
+    // A full carrier should sail immediately, even though freshly boarded
+    // cargo must wait for the next turn to disembark. A partial carrier may
+    // depart early if no more suitable passengers are available.
+    const waitingRiders = cargo.length && cargo.length < carrierCapacity(g, u)
+      ? g.units.filter(v => v.hp > 0 && v.side === u.side && !memo.guards?.[v.id] &&
+          sameLift(frontOf(g, memo, v), bound) && wantsLift(g, v, memo)) : [];
+    if (cargo.length && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3 || !waitingRiders.length)) {
       if (landing(tile(g, u.c, u.r)) == null) {
         // Seed feasible landing positions, then route through navigable water rather
         // than following a land shortcut in the formation's strategic goal field.
@@ -167,6 +174,9 @@
         if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);
       }
+      // Cargo newly loaded this turn is staged or transported, but never
+      // launched. The same restriction applies even on an undefended beach.
+      if (!readyCargo.length) return true;
       // Briefly hold for a second wave bound for the same front instead of
       // drip-feeding lone transports. Only on a quiet beach, only while that
       // carrier keeps closing in, and never while it is itself holding (so two
@@ -191,11 +201,8 @@
       return true;
     }
     if (cargo.length) job.wait++;
-    // A fully loaded carrier with only freshly boarded troops must wait for
-    // the next turn, not sail back toward more troops it cannot take aboard.
-    if (!readyCargo.length && cargo.length >= carrierCapacity(g, u)) return true;
-    const riders = g.units.filter(
-      v => v.hp > 0 && v.side === u.side && !memo.guards?.[v.id] && (!cargo.length || sameLift(frontOf(g, memo, v), bound)) && wantsLift(g, v, memo),
+    const riders = cargo.length ? waitingRiders : g.units.filter(
+      v => v.hp > 0 && v.side === u.side && !memo.guards?.[v.id] && wantsLift(g, v, memo),
     );
     if (!riders.length) {
       const stage = !cargo.length && memo.staging;
