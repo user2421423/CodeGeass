@@ -2,7 +2,7 @@
 
 ## Scope
 
-Every one of the **68 registered scenarios** was instantiated for **every playable side** and checked for stable terrain; **1,200,612 scenario hexes (counting each separate scenario map)** were inspected. In total, **1,102,656 hexes** had a centre-point land-versus-sea comparison to an independent Natural Earth 1:50m land polygon dataset.
+Every one of the **68 registered scenarios** was instantiated for **every playable side** and checked for stable terrain; **1,200,612 scenario hexes (counting each separate scenario map)** were inspected. In total, **1,102,691 hexes** had a centre-point land-versus-sea comparison to an independent Natural Earth 1:50m land polygon dataset.
 
 The audit checks supported terrain identifiers, tile/grid coordinates, faction-side terrain agreement, city and port placement, ship navigability, and illegal blocked-hex deployment. Sea, mixed coast, playable land and deliberately nonplayable `offmap` are separately counted. **Final structural errors: 0.**
 
@@ -48,13 +48,23 @@ The subsequent review of the other scenarios made further verified cartographic 
 - **Battle of Luoyang, Chinese Civil War and E.U. vs Chinese Federation Luoyang:** The five genuine open-water cells at the northeastern Bohai Sea margin were being rendered as land. The same five-cell geographic correction was applied to **both independent Luoyang source modules** and validated in all **three registered scenario entries**. Each has 169 sea cells and 166 raw reference disagreements after the correction.
 - **E.U. invasion of Manchuria:** The scenario inherited an inaccurate coast/China mainland seam from its Korean map mask. An independent 1:50m land sampler now covers the eastern Manchuria border; reference disagreements fell from **276 to 134**. Bohai naval staging and all **three ports** remain intact.
 
-[Successful final geographic audit and commit](https://github.com/user2421423/CodeGeass/actions/runs/39754045833): **68 scenario maps**, **1,200,612 scenario hexes**, **1,102,656 geographic centre comparisons**, **18,254 raw reference disagreements**, **0 structural errors**. The latest audit is still a map-structure/reference comparison, not a guarantee that all residual differences are cartographic mistakes.
+[Successful final geographic audit and commit](https://github.com/user2421423/CodeGeass/actions/runs/39754045833): **68 scenario maps**, **1,200,612 scenario hexes**, **1,102,691 geographic centre comparisons**, **15,705 raw reference disagreements**, **0 structural errors**. The latest audit is still a map-structure/reference comparison, not a guarantee that all residual differences are cartographic mistakes.
 
 The expanded [all-factions/all-difficulties audit](https://github.com/user2421423/CodeGeass/actions/runs/39750876917) independently generated **580 variants** (all 68 registered scenarios, every playable side, Normal/Hard/Challenge/Elite), inspected **10,210,832 terrain cells**, and reported **0 terrain or deployment failures**. This was a one-time expanded review; the routine geographic-mask rebuild no longer redoes that large variant sweep on every trigger.
 
+## Fourth pass: shared Japan and Nordic map validation
+
+A final review focused on scenarios that had not needed earlier individual source edits.
+
+- **Northern Europe:** An independent nine-sample Natural Earth 1:50m coast check identified **10 physical Nordic land tiles** mislabeled as sea in the common `dist/scenarios-europe.js` source. They were corrected on `main`; this shared source supplies **five registered scenarios** (`european-war`, `geass-war`, `eu-military-coup`, `protagonists-antagonists`, `shin-independence`). Each now has **229** centre-point disagreements, versus 238 previously.
+- **Japan:** The independent audit's generic bounds-centre formula sampled the **wrong physical coordinates** for four zoomed Japanese theatre variants. The comparison now uses the actual scenario projection, which is also used by the terrain generation. This reduced each scenario's *apparent* mismatches from **658 to 32**, without changing any Japan gameplay hexes or its carefully curated islands and sea connections. A nine-sample geography check independently confirmed **482** northern open-water locations already correctly classified as water. Four affected scenarios are `invasion-japan`, `defense-japan`, `division-japan`, and `bk-civil-war`.
+- **Remaining scenarios:** All registered scenarios and their terrain generators were again fully scanned. Do not force terrain edits for freshwater lakes missing from the land-only reference, intentionally cropped maps, deliberately navigable rivers/canals, or shoreline-resolution differences without independent confirmation of a gameplay error.
+
+[Successful fourth-pass geographic + 580-variant check](https://github.com/user2421423/CodeGeass/actions/runs/39756635673): **68 registered scenarios**, **1,200,612 scenario map hexes**, **1,102,691 compared reference centres**, **15,705 raw reference disagreements**, **0 structural errors**; **580 faction/difficulty variants**, **10,210,832 checked terrain cells**, **0 variant failures**. The audit reports remaining independent-map discrepancies for future geographically specific review rather than modifying safe/intended gameplay terrain automatically.
+
 ## Important accuracy distinction
 
-The independent Natural Earth point comparison reports **18,254 raw geographic disagreements**, which **must not be presented as confirmed bugs or silently mass-converted**. That geodata excludes inland lakes (e.g. the Great Lakes and Caspian), while scenarios also intentionally crop playable countries, use fictional coast/canal crossings, explicit GSHHS 20–80% mixed-coast footprints, or reserve background `offmap` cells. Coastline edge pixels differ further between data sources. The independent comparison identifies candidates for map-specific cartographic review; it is not a definitive validation of every external coast. The structural and deployment audit **passed**, but an independently certified cartographic match for every hex is **not claimed**. No unverified broad terrain remapping was made.
+The independent Natural Earth point comparison reports **15,705 raw geographic disagreements**, which **must not be presented as confirmed bugs or silently mass-converted**. That geodata excludes inland lakes (e.g. the Great Lakes and Caspian), while scenarios also intentionally crop playable countries, use fictional coast/canal crossings, explicit GSHHS 20–80% mixed-coast footprints, or reserve background `offmap` cells. Coastline edge pixels differ further between data sources. The independent comparison identifies candidates for map-specific cartographic review; it is not a definitive validation of every external coast. The structural and deployment audit **passed**, but an independently certified cartographic match for every hex is **not claimed**. No unverified broad terrain remapping was made.
 
 The `Reference mismatches` column below counts independent centre-point land/sea disagreements (not verified defects); coastline cells and nonplayable background cells are excluded from that direct comparison.
 
@@ -68,7 +78,7 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | `bf-malacca` | 168 × 132 | 2 | 13360 | 779 | 0 | 71 | PASS |
 | `bf-south-china` | 168 × 124 | 2 | 5077 | 307 | 0 | 62 | PASS |
 | `bf-yangtze` | 196 × 122 | 2 | 265 | 270 | 0 | 265 | PASS |
-| `bk-civil-war` | 110 × 84 | 2 | 1596 | 289 | 6204 | 658 | PASS |
+| `bk-civil-war` | 110 × 84 | 2 | 1596 | 289 | 6204 | 32 | PASS |
 | `britannia-iraq-iran` | 168 × 112 | 2 | 2520 | 290 | 0 | 51 | PASS |
 | `britannia-siberia` | 160 × 88 | 2 | 4319 | 556 | 0 | 105 | PASS |
 | `britannia-western-russia` | 128 × 88 | 2 | 283 | 28 | 0 | 222 | PASS |
@@ -91,8 +101,8 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | `chinese-civil-war` | 174 × 116 | 2 | 169 | 6 | 0 | 166 | PASS |
 | `conquest-indochina` | 120 × 104 | 2 | 5602 | 148 | 0 | 67 | PASS |
 | `crossing-urals` | 120 × 90 | 2 | 0 | 0 | 0 | 37 | PASS |
-| `defense-japan` | 110 × 84 | 2 | 1596 | 289 | 6204 | 658 | PASS |
-| `division-japan` | 110 × 84 | 3 | 1596 | 289 | 6204 | 658 | PASS |
+| `defense-japan` | 110 × 84 | 2 | 1596 | 289 | 6204 | 32 | PASS |
+| `division-japan` | 110 × 84 | 3 | 1596 | 289 | 6204 | 32 | PASS |
 | `eu-cf-beijing` | 176 × 112 | 2 | 4966 | 137 | 0 | 2 | PASS |
 | `eu-cf-himalayas` | 144 × 108 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-cf-india` | 168 × 124 | 2 | 9415 | 213 | 0 | 393 | PASS |
@@ -105,29 +115,29 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | `eu-cf-xinjiang` | 144 × 96 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-great-lakes` | 176 × 112 | 2 | 3209 | 594 | 0 | 3209 | PASS |
 | `eu-greenland` | 140 × 120 | 2 | 7177 | 662 | 3038 | 260 | PASS |
-| `eu-military-coup` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
+| `eu-military-coup` | 120 × 80 | 2 | 2598 | 291 | 2230 | 229 | PASS |
 | `eu-panama` | 156 × 100 | 2 | 10612 | 435 | 0 | 54 | PASS |
 | `eu-pendragon` | 180 × 126 | 2 | 0 | 0 | 0 | 131 | PASS |
 | `eu-rocky-mountains` | 224 × 168 | 2 | 175 | 0 | 0 | 175 | PASS |
-| `european-war` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
-| `geass-war` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
+| `european-war` | 120 × 80 | 2 | 2598 | 291 | 2230 | 229 | PASS |
+| `geass-war` | 120 × 80 | 2 | 2598 | 291 | 2230 | 229 | PASS |
 | `invasion-american-east-coast` | 160 × 176 | 2 | 15583 | 842 | 671 | 41 | PASS |
 | `invasion-brazil` | 176 × 144 | 2 | 8654 | 396 | 1411 | 7 | PASS |
 | `invasion-california` | 160 × 120 | 2 | 4661 | 194 | 1665 | 6 | PASS |
 | `invasion-canada` | 196 × 112 | 2 | 9525 | 2005 | 0 | 265 | PASS |
 | `invasion-caribbean` | 184 × 120 | 2 | 19080 | 380 | 1933 | 7 | PASS |
 | `invasion-hawaii` | 176 × 114 | 2 | 18704 | 179 | 0 | 43 | PASS |
-| `invasion-japan` | 110 × 84 | 3 | 1596 | 289 | 6204 | 658 | PASS |
+| `invasion-japan` | 110 × 84 | 3 | 1596 | 289 | 6204 | 32 | PASS |
 | `invasion-korea` | 184 × 160 | 2 | 19728 | 735 | 3052 | 54 | PASS |
 | `invasion-south-africa` | 144 × 108 | 2 | 6529 | 228 | 1351 | 0 | PASS |
 | `invasion-turkey` | 144 × 104 | 2 | 4850 | 484 | 0 | 104 | PASS |
 | `operation-stonehenge` | 120 × 96 | 2 | 6640 | 264 | 264 | 380 | PASS |
 | `partition-britannia` | 178 × 110 | 3 | 8866 | 1051 | 544 | 477 | PASS |
 | `philippines-invasion` | 144 × 112 | 2 | 14988 | 363 | 0 | 256 | PASS |
-| `protagonists-antagonists` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
+| `protagonists-antagonists` | 120 × 80 | 2 | 2598 | 291 | 2230 | 229 | PASS |
 | `rounds-rebellion` | 180 × 126 | 2 | 0 | 0 | 0 | 131 | PASS |
 | `rounds-tournament` | 180 × 126 | 6 | 0 | 0 | 0 | 131 | PASS |
-| `shin-independence` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
+| `shin-independence` | 120 × 80 | 2 | 2598 | 291 | 2230 | 229 | PASS |
 | `ufn-civil-war` | 200 × 120 | 2 | 0 | 91 | 13838 | 12 | PASS |
 | `war-for-australia` | 132 × 92 | 3 | 7176 | 171 | 0 | 64 | PASS |
 
