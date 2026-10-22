@@ -3,6 +3,7 @@
 const define=root.KNIGHTMARE_ALT_HISTORY?.define||
  (typeof require==='function'?require('./scenarios-alternate-common.js').define:null);
 define({
+ openingTreasury:{"loyalists":{"credits":2000,"industry":500,"science":500,"sakuradite":144},"eunuchs":{"credits":2000,"industry":500,"science":500,"sakuradite":162}},
  id:'chinese-civil-war',parent:'battle-luoyang',title:'Chinese Civil War — The Imperial Restoration',
  phase:'tianzi-restoration',
  map:{britannia:'loyalists',cf:'eunuchs'},
