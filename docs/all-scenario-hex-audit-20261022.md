@@ -2,7 +2,7 @@
 
 ## Scope
 
-Every one of the **68 registered scenarios** was instantiated for **every playable side** and checked for stable terrain; **1,200,612 scenario hexes (counting each separate scenario map)** were inspected. In total, **1,103,460 hexes** had a centre-point land-versus-sea comparison to an independent Natural Earth 1:50m land polygon dataset.
+Every one of the **68 registered scenarios** was instantiated for **every playable side** and checked for stable terrain; **1,200,612 scenario hexes (counting each separate scenario map)** were inspected. In total, **1,102,656 hexes** had a centre-point land-versus-sea comparison to an independent Natural Earth 1:50m land polygon dataset.
 
 The audit checks supported terrain identifiers, tile/grid coordinates, faction-side terrain agreement, city and port placement, ship navigability, and illegal blocked-hex deployment. Sea, mixed coast, playable land and deliberately nonplayable `offmap` are separately counted. **Final structural errors: 0.**
 
@@ -40,9 +40,21 @@ The remaining scenarios were also instantiated, checked against the independent 
 
 **Unresolved reference disagreements are not automatically terrain errors.** Major categories include the Great Lakes and Caspian inland water that the land-only reference does not detect, deliberately excluded geographic land in the Area 18 map, deliberately widened canals/rivers, world-map Arctic coastline simplifications and different GSHHS versus Natural Earth shore resolution. Independent city ports placed some hexes away from their parent city are intentional in several scenarios, not automatically invalid. A definitive manually certified every-coastline polygon match is not claimed; these residual candidates should not be batch-converted without map-specific gameplay review.
 
+## Third pass: remaining regional scenarios and every difficulty
+
+The subsequent review of the other scenarios made further verified cartographic corrections on `main`:
+
+- **Invasion of Greenland:** Canadian Arctic islands in this Greenland-only map were navigable sea. The Natural Earth Canada mask converted **821 additional foreign-island tiles** to blocked `offmap` and retained **15 valid harbours**. This resolved most independent-land disagreements in that scenario, down from **1,008 to 260**.
+- **Battle of Luoyang, Chinese Civil War and E.U. vs Chinese Federation Luoyang:** The five genuine open-water cells at the northeastern Bohai Sea margin were being rendered as land. The same five-cell geographic correction was applied to **both independent Luoyang source modules** and validated in all **three registered scenario entries**. Each has 169 sea cells and 166 raw reference disagreements after the correction.
+- **E.U. invasion of Manchuria:** The scenario inherited an inaccurate coast/China mainland seam from its Korean map mask. An independent 1:50m land sampler now covers the eastern Manchuria border; reference disagreements fell from **276 to 134**. Bohai naval staging and all **three ports** remain intact.
+
+[Successful final geographic audit and commit](https://github.com/user2421423/CodeGeass/actions/runs/39754045833): **68 scenario maps**, **1,200,612 scenario hexes**, **1,102,656 geographic centre comparisons**, **18,254 raw reference disagreements**, **0 structural errors**. The latest audit is still a map-structure/reference comparison, not a guarantee that all residual differences are cartographic mistakes.
+
+The expanded [all-factions/all-difficulties audit](https://github.com/user2421423/CodeGeass/actions/runs/39750876917) independently generated **580 variants** (all 68 registered scenarios, every playable side, Normal/Hard/Challenge/Elite), inspected **10,210,832 terrain cells**, and reported **0 terrain or deployment failures**. This was a one-time expanded review; the routine geographic-mask rebuild no longer redoes that large variant sweep on every trigger.
+
 ## Important accuracy distinction
 
-The independent Natural Earth point comparison reports **19,159 raw geographic disagreements**, which **must not be presented as confirmed bugs or silently mass-converted**. That geodata excludes inland lakes (e.g. the Great Lakes and Caspian), while scenarios also intentionally crop playable countries, use fictional coast/canal crossings, explicit GSHHS 20–80% mixed-coast footprints, or reserve background `offmap` cells. Coastline edge pixels differ further between data sources. The independent comparison identifies candidates for map-specific cartographic review; it is not a definitive validation of every external coast. The structural and deployment audit **passed**, but an independently certified cartographic match for every hex is **not claimed**. No unverified broad terrain remapping was made.
+The independent Natural Earth point comparison reports **18,254 raw geographic disagreements**, which **must not be presented as confirmed bugs or silently mass-converted**. That geodata excludes inland lakes (e.g. the Great Lakes and Caspian), while scenarios also intentionally crop playable countries, use fictional coast/canal crossings, explicit GSHHS 20–80% mixed-coast footprints, or reserve background `offmap` cells. Coastline edge pixels differ further between data sources. The independent comparison identifies candidates for map-specific cartographic review; it is not a definitive validation of every external coast. The structural and deployment audit **passed**, but an independently certified cartographic match for every hex is **not claimed**. No unverified broad terrain remapping was made.
 
 The `Reference mismatches` column below counts independent centre-point land/sea disagreements (not verified defects); coastline cells and nonplayable background cells are excluded from that direct comparison.
 
@@ -51,7 +63,7 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | Scenario ID | Hex dimensions | Playable sides | Sea | Coast | Offmap | Reference mismatches | Structural checks |
 |---|---:|---:|---:|---:|---:|---:|---|
 | `area-18` | 120 × 88 | 3 | 6082 | 210 | 0 | 2884 | PASS |
-| `battle-luoyang` | 174 × 116 | 2 | 164 | 6 | 0 | 171 | PASS |
+| `battle-luoyang` | 174 × 116 | 2 | 169 | 6 | 0 | 166 | PASS |
 | `bering-strait` | 120 × 80 | 2 | 6221 | 219 | 0 | 56 | PASS |
 | `bf-malacca` | 168 × 132 | 2 | 13360 | 779 | 0 | 71 | PASS |
 | `bf-south-china` | 168 × 124 | 2 | 5077 | 307 | 0 | 62 | PASS |
@@ -76,7 +88,7 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | `cf-pacific-northwest` | 176 × 120 | 2 | 7035 | 267 | 0 | 10 | PASS |
 | `cf-panama` | 156 × 100 | 2 | 10612 | 435 | 0 | 54 | PASS |
 | `cf-pendragon` | 180 × 126 | 2 | 0 | 0 | 0 | 131 | PASS |
-| `chinese-civil-war` | 174 × 116 | 2 | 164 | 6 | 0 | 171 | PASS |
+| `chinese-civil-war` | 174 × 116 | 2 | 169 | 6 | 0 | 166 | PASS |
 | `conquest-indochina` | 120 × 104 | 2 | 5602 | 148 | 0 | 67 | PASS |
 | `crossing-urals` | 120 × 90 | 2 | 0 | 0 | 0 | 37 | PASS |
 | `defense-japan` | 110 × 84 | 2 | 1596 | 289 | 6204 | 658 | PASS |
@@ -85,14 +97,14 @@ The `Reference mismatches` column below counts independent centre-point land/sea
 | `eu-cf-himalayas` | 144 × 108 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-cf-india` | 168 × 124 | 2 | 9415 | 213 | 0 | 393 | PASS |
 | `eu-cf-kazakhstan` | 156 × 104 | 2 | 852 | 143 | 0 | 364 | PASS |
-| `eu-cf-luoyang` | 174 × 116 | 2 | 164 | 6 | 0 | 171 | PASS |
-| `eu-cf-manchuria` | 144 × 112 | 2 | 2019 | 138 | 0 | 276 | PASS |
+| `eu-cf-luoyang` | 174 × 116 | 2 | 169 | 6 | 0 | 166 | PASS |
+| `eu-cf-manchuria` | 144 × 112 | 2 | 1870 | 121 | 0 | 134 | PASS |
 | `eu-cf-mongolia` | 164 × 96 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-cf-persia` | 168 × 112 | 2 | 2520 | 290 | 0 | 51 | PASS |
 | `eu-cf-sichuan` | 148 × 108 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-cf-xinjiang` | 144 × 96 | 2 | 0 | 0 | 0 | 0 | PASS |
 | `eu-great-lakes` | 176 × 112 | 2 | 3209 | 594 | 0 | 3209 | PASS |
-| `eu-greenland` | 140 × 120 | 2 | 7998 | 662 | 2217 | 1008 | PASS |
+| `eu-greenland` | 140 × 120 | 2 | 7177 | 662 | 3038 | 260 | PASS |
 | `eu-military-coup` | 120 × 80 | 2 | 2602 | 292 | 2236 | 238 | PASS |
 | `eu-panama` | 156 × 100 | 2 | 10612 | 435 | 0 | 54 | PASS |
 | `eu-pendragon` | 180 × 126 | 2 | 0 | 0 | 0 | 131 | PASS |
