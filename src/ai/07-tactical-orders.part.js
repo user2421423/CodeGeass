@@ -22,14 +22,17 @@
         // dies; changing it automatically every turn undermines this ability.
         if(g.units.some(v=>v.hp>0&&v.side===u.side&&v.id===u.expJohanneWardTarget))
           return null;
+        // Commanders, Elite Forces and wounded allies first; otherwise the hardest hitter, since an
+        // unassigned bodyguard protects nobody.
         return pickBest(options,v=>(v.cmd?50:0)+(v.elite?20:0)+
-          (v.hp/maxHP(v)<.5?10:0));
+          (v.hp/maxHP(v)<.5?10:0)+punch(v)/100);
       }
       case 'jeanrowe': {
         // Only rescue endangered commanders; avoid random AI teleports.
         if(u.hp/maxHP(u)<.65)return null;
         const enemies=g.units.filter(w=>w.hp>0&&foe(g,w.side,u.side)&&!atSea(g,w));
-        const exposure=p=>enemies.filter(w=>inRange(w,p,g)).length;
+        // Enemies whose weapon range covers p (the engine's inRange is not exported to the AI).
+        const exposure=p=>enemies.filter(w=>{const r=rangeOf(g,w),d=dist(g,w,p);return d>=r.min&&d<=r.max;}).length;
         const safe=exposure(u);
         return pickBest(options,v=>{
           if(!v.cmd||v.hp/maxHP(v)>.4)return 0;
@@ -525,11 +528,15 @@
           sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
           // A sea transport must spend a turn sailing to a staging hex beside
           // a legal beach; only on its following turn may it move onto land.
-          if (atSeaTransport && fieldAt(p) <= currentField && adjacent(g, p).some(n => {
-            if (isSea(n) || TERRAIN[n.terrain]?.blocked || unitAt(g, n)) return false;
+          // Without a free beach beside it, it would float there for good (a
+          // formation parked at its rally point offshore never found a hex
+          // nearer the goal), so being adrift costs, and a staging hex is
+          // worth a short detour.
+          if (atSeaTransport) sc += adjacent(g, p).some(n => {
+            if (isSea(n) || TERRAIN[n.terrain]?.blocked || (unitAt(g, n) && unitAt(g, n) !== u)) return false;
             const city = stationAt(g, n);
             return !city || !foe(g, city.owner, u.side) || city.shield <= 0;
-          })) sc += 24;
+          }) ? (fieldAt(p) <= currentField + 3 ? 24 : 0) : -20;
           if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
         } else if (!fromLand) {
           sc += naval ? 30 : 90;
