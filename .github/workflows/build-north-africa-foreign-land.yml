@@ -16,6 +16,7 @@ on:
       - 'tools/build_greenland_foreign_mask.py'
       - 'tools/audit_all_scenario_variants.cjs'
       - 'tools/build_luoyang_bohai_mask.py'
+      - 'tools/build_manchuria_border_land.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
