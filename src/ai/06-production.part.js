@@ -165,34 +165,8 @@
     const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
       !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
-    // City development: spend surplus on economic growth in safe cities or
-    // fortress batteries on defensible approaches, reserving frontline unit funds.
-    if (g.turn >= 2) {
-      const candidates = bases
-        .filter(s => !cityTierReason(g, s) && s.shield >= s.maxShield * 0.5)
-        .map(s => {
-          const d = front(s), tier = cityTierOf(s);
-          const fortress = tier === 3 && d >= 3 && d <= 7;
-          // Economic city tiers pay back credits in 14–15 income turns.
-          // Do not spend on them near a short scenario's turn limit.
-          const remaining=g.mode==='scenario'&&Number.isFinite(g.scenario?.turnLimit)
-            ? g.scenario.turnLimit-g.turn : Infinity;
-          const economic = tier < 3 && d >= 4 && remaining >= (tier===1?14:15);
-          return { s, d, useful: fortress || economic,
-            score: (fortress ? 120 : economic ? 60 : 0) + (s.capital ? 15 : 0) +
-              (s.portLevel ? 8 : 0) + (d <= 7 ? 12 - d : 0) - 3 * (tier - 1) };
-        })
-        .filter(v => v.useful)
-        .sort((a, b) => b.score - a.score || a.s.id - b.s.id);
-      const limit = Math.min(3, Math.max(1, Math.ceil(bases.length / 25)));
-      let built = 0;
-      for (const { s, d } of candidates) {
-        if (built >= limit) break;
-        if (d <= 2 || (d < 5 && s.shield < s.maxShield * 0.75)) continue;
-        const cost = decreePrice(cityTierCost(s), s);
-        if (developmentAffordable(cost) && upgradeCityTier(g, s.id).ok) built++;
-      }
-    }
+    // City tiers are never upgraded by AI. Only human players choose city-tier improvements.
+    // Military infrastructure upgrades (factories, labs, ports) remain available below.
     // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
     // then the lowest-level factory or lab at the safest city.
     if (g.turn >= 2) {
@@ -619,31 +593,5 @@
       // first leave the city hex; all regular costs and checks still apply.
       for (const s of yards) tryBuild(s, menus.get(s), [1]);
     }
-    // Conquest only: armies, fleets, repairs and strategic projects were funded
-    // first. Reinvest genuinely unused treasury in safe, productive cities.
-    // Unlike the ordinary development pass, large empires can upgrade multiple
-    // cities (or the same city twice) without an artificial three-upgrade cap.
-    // Retain next-turn military reserves and all strategic-weapon savings.
-    if (g.mode === 'conquest' && g.turn >= 2) {
-      const nextIncome = income(g, side);
-      const creditBuffer = Math.max(500, ordinaryBudget.credits * 2,
-        Math.round(nextIncome.credits * 0.75));
-      const industryBuffer = Math.max(130, ordinaryBudget.industry * 2,
-        Math.round(nextIncome.industry * 0.75));
-      const canInvest = cost => affordable(cost) &&
-        spendable() - cost.credits >= creditBuffer &&
-        e.industry - reserveInd - (cost.industry || 0) >= industryBuffer;
-      const safeCities = bases.filter(s => !s.capital && front(s) >= 4 && cityTierOf(s) < 3)
-        .sort((a, b) => cityTierOf(a) - cityTierOf(b) || front(a) - front(b) || a.id - b.id);
-      const limit = Math.min(12, Math.ceil(bases.length / 8));
-      let investments = 0;
-      for (const s of safeCities) {
-        while (investments < limit && cityTierOf(s) < 3 && !cityTierReason(g, s)) {
-          const cost = decreePrice(cityTierCost(s), s);
-          if (!canInvest(cost) || !upgradeCityTier(g, s.id).ok) break;
-          investments++;
-        }
-        if (investments >= limit) break;
-      }
-    }
+
   }
