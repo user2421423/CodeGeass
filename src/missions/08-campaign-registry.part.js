@@ -139,6 +139,16 @@
       condition?.hold ? { ...condition, hold: Math.max(17, Math.min(19,
         Math.round(condition.hold * 1.8))) } : condition);
     if (m.win.length === 1) m.win = m.win[0];
+    if (hold && typeof m.objective === 'string') {
+      const requiredTurn = (Array.isArray(m.win) ? m.win : [m.win])
+        .find(condition => condition?.hold).hold;
+      // The briefing must match the adjusted hold victory condition. One
+      // mission formerly had different Normal vs Hard labels; both now use
+      // the same explicit deadline rather than promising an early victory.
+      m.objective = m.objective.replace(
+        /\bturn\s+\d+(?:\s+on\s+Normal,\s+or\s+turn\s+\d+\s+on\s+Hard\s+and\s+above)?/gi,
+        'turn ' + requiredTurn);
+    }
     if (m.lose?.turns)
       m.lose = { ...m.lose, turns: Math.max(27, Math.min(32,
         Math.ceil(m.lose.turns * 1.7))) };
