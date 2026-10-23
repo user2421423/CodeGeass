@@ -245,10 +245,18 @@
     const t = TYPES[u.type];
     return t.naval === 'ship' || AIR_DEFENSE_CLASSES.has(t.cls) || !!t.float || !!eliteFx(u).float;
   }
+  // The Wang Hu's Radiant Wave Barrier blocks ranged attacks from farther
+  // than one hex, regardless of attacker's unit class or the save version.
+  function rangedImmuneTo(g, target, source) {
+    return !!(target && target.hp > 0 && source &&
+      fx(target).rangedImmunity && dist(g, target, source) > 1);
+  }
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
-    if (target) return foe(g, target.side, u.side) && (!isAir(target) || canHitAir(u));
+    if (target) return foe(g, target.side, u.side) &&
+      !rangedImmuneTo(g, target, u) &&
+      (!isAir(target) || canHitAir(u));
     return !!st && foe(g, st.owner, u.side) && st.shield > 0;
   }
   // Whether a unit still has any order besides holding position: firing, moving, repairing, reinforcing or an action.

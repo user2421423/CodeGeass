@@ -24,6 +24,7 @@
       if (!fortressReady(g, station)) return { ok: false, reason: 'The battery is not ready.' };
       const defender = unitAt(g, { c, r });
       if (!defender || !isFoe(g, defender.side, station.owner) ||
+          rangedImmuneTo(g,defender,station) ||
           dist(g, station, defender) > fortressRange(g, station))
         return { ok: false, reason: `No enemy unit within ${fortressRange(g, station)} hexes of the city.` };
       return { ok: true, station, defender };

@@ -549,6 +549,9 @@
     }
   }
   function smilasDealCombatDamage(g, victim, attacker, amount, allowJohanne=true) {
+    // Scripted volleys, support strikes and splash cannot bypass the same
+    // barrier that prevents ordinary ranged targeting.
+    if(rangedImmuneTo(g,victim,attacker))return 0;
     const guard=allowJohanne?johanneBodyguard(g,victim,attacker):null;
     if(guard){johanneAbsorb(g,victim,attacker,guard,amount);return 0;}
     const incoming = darltonProtect(g,victim,attacker,guilfordProtect(g,victim,attacker,amount));
@@ -849,7 +852,7 @@
     // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
     const splashHits = !johanneRedirect && pr.splash ? g.units
       .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1 &&
-        (!isAir(v) || canHitAir(a)))
+        !rangedImmuneTo(g,v,a) && (!isAir(v) || canHitAir(a)))
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
     // Next initiating volley consumes vengeance, including its already-computed splash.
     if(a.cmd==='darlton'&&a.expDarltonVengeanceBonus)delete a.expDarltonVengeanceBonus;

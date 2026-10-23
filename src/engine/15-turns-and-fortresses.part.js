@@ -377,7 +377,8 @@
     if (!fortressReady(g, s)) return [];
     return within(g, s, fortressRange(g, s))
       .map(p => unitAt(g, p))
-      .filter(u => u && foe(g, u.side, s.owner))
+      .filter(u => u && foe(g, u.side, s.owner) &&
+        !rangedImmuneTo(g,u,s))
       .map(u => tile(g, u.c, u.r));
   }
   function fireFortress(g, id, c, r) {
@@ -396,7 +397,8 @@
     // Battery Overcharge II: the blast also catches enemy units next to the target.
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
-        if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
+        if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id ||
+            dist(g, v, foe) !== 1 || rangedImmuneTo(g,v,s)) continue;
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
         const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);

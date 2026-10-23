@@ -401,6 +401,8 @@
       (v.expLink?.partner===defender.id&&v.expLinkTurn!==g.turn||
        fx(v).relief&&v.expReliefTurn!==g.turn&&dist(g,v,defender)<=2));
     const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
+    // Reactive support uses a direct HP path rather than regular combat.
+    if(rangedImmuneTo(g,attacker,unit))return;
     const n=Math.max(1,Math.round(power(g,unit,attacker,stationAt(g,attacker),true)*(fx(unit).relief?.6:.5)));
     const taken=attacker.cmd==='darlton'?darltonProtect(g,attacker,unit,n):n;
     const before = attacker.hp;
