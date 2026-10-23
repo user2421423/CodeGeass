@@ -185,9 +185,6 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (!cost ? 'Maximum city tier' : null) ||
-      (s.cityTierUpgradedTurn === g.turn ? 'City tier already upgraded this turn' : null) ||
-      (s.capturedTurn === g.turn ? 'Newly captured city must wait until next turn' : null) ||
-      (s.shield <= 0 ? 'City defenses must be operational' : null) ||
       (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       shortfall(funds(g, s.owner), decreePrice(cost, s))
     );

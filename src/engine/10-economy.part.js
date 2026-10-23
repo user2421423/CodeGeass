@@ -633,8 +633,8 @@
     if (kind === 'port') return { credits: 140 * (l + 1), industry: 35 * (l + 1) };
     return { credits: 120 * (l + 1), industry: 30 * (l + 1) };
   }
-  // Advance one city tier per owner turn, independently of factories.
-  // New maximum HP does not restore HP lost to combat.
+  // Allow repeated city-tier upgrades in one turn, including immediately after capture.
+  // Newly captured cities stay at zero shield; higher maximum HP never restores damage.
   function upgradeCityTier(g, id) {
     const s = g.stations.find(v => v.id === id);
     const why = cityTierReason(g, s);
@@ -644,7 +644,6 @@
     spend(funds(g, s.owner), cost);
     if (s.expDecree) delete s.expDecree;
     s.cityTier = previous + 1;
-    s.cityTierUpgradedTurn = g.turn;
     if (s.cityTier === 4) {
       s.fort = true;
       s.gun ||= s.name + ' battery';
