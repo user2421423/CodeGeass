@@ -396,7 +396,7 @@
     const counterAllowed = counter || senbaReaction;
     // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
     // Ordinary commanders' counterfire remains non-critical.
-    const counterCritMult = d && fx(d).guaranteedCrit
+    const counterCritMult = d && fx(d).guaranteedCrit && !fx(a).critImmune
       ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
         techValue(g, d.side, `${branchOf(d.type)}.critpower`)
       : 1;
@@ -415,7 +415,8 @@
       shield: shieldDmg,
       counter: counterDamage + counterReflection,
       counterAllowed,
-      crit,
+      // A critical hit cannot land on an immune defending formation.
+      crit: d && fx(d).critImmune ? 0 : crit,
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
@@ -835,7 +836,7 @@
       // A persistent Johanne ward redirects the entire first initiating
       // strike. It does not grant the remote bodyguard free counterfire.
       johanneRedirect = !!johanneBodyguard(g,d,a),
-      crit = random(g) < pr.crit,
+      crit = !(d && fx(d).critImmune) && random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
@@ -952,7 +953,7 @@
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       // Guaranteed critical counterfire uses the same critical multiplier as
       // a normal attacking volley; other defenders keep ordinary counterfire.
-      const counterCritMult = fx(d).guaranteedCrit
+      const counterCritMult = fx(d).guaranteedCrit && !fx(a).critImmune
         ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
           techValue(g, d.side, `${branchOf(d.type)}.critpower`)
         : 1;
