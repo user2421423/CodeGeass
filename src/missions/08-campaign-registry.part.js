@@ -1,5 +1,183 @@
   // Two story seasons: Lelouch of the Rebellion (2010–2017) and R2 (2018), each played from
   // the Black Knights' side and from Britannia's. Mission ids are kept so saved stars carry over.
+
+  // Experimental Story Mode pacing pass. This only affects new missions launched on
+  // this branch; existing in-progress game boards are not rescaled on load.
+  // Keep the hand-authored bomb timers, escape set pieces and large UFN maps intact.
+  const STORY_PACING_EXCEPTIONS = new Set([
+    'bk_saitama', 'bk5', 'br2', 'br3', 'br_execution', 'cf6',
+    'eb_ark', 'eu_ambush', 'eu_white_death', 'bk10', 'br11',
+  ]);
+  // Widening narrow straits can strand units, so naval/island missions retain
+  // their coast geometry while still receiving garrisons and longer deadlines.
+  const STORY_PACING_KEEP_COAST = new Set([
+    'bk_shikine', 'br_shikine', 'bk_pacific', 'br_pacific',
+    'bk_yokosuka2', 'br_yokosuka2',
+  ]);
+  const STORY_PACING_FACTOR = 1.5;
+
+  function longerStoryMission(m) {
+    if (STORY_PACING_EXCEPTIONS.has(m.id) || m.id.startsWith('ufn')) return;
+    const conditions = Array.isArray(m.win) ? m.win : [m.win];
+    const hold = conditions.some(condition => condition && condition.hold);
+    // Already-designed 20+ turn offensive encounters do not need enlargement.
+    if (!hold && (!m.lose?.turns || m.lose.turns >= 20)) return;
+    const originalMap = m.map;
+    const originalUnits = m.units;
+    const originalCities = m.cities;
+    const stretch = !hold && !STORY_PACING_KEEP_COAST.has(m.id);
+    const loc = n => Math.round(n * STORY_PACING_FACTOR);
+    const tile = (c, r) => m.map[r]?.[c];
+    const clonePosition = value => {
+      if (Array.isArray(value)) {
+        // Story unit specs: [side, frame, column, row, stack, commander, options].
+        if (typeof value[0] === 'string' && typeof value[1] === 'string'
+            && Number.isFinite(value[2]) && Number.isFinite(value[3]))
+          return value.map((item, index) =>
+            index === 2 || index === 3 ? stretch ? loc(item) : item : clonePosition(item));
+        return value.map(clonePosition);
+      }
+      if (!value || typeof value !== 'object') return value;
+      const out = {};
+      for (const [key, entry] of Object.entries(value)) out[key] = clonePosition(entry);
+      if (stretch) {
+        if (Number.isFinite(value.c)) out.c = loc(value.c);
+        if (Number.isFinite(value.r)) out.r = loc(value.r);
+      }
+      return out;
+    };
+    if (stretch) {
+      const oldHeight = originalMap.length, oldWidth = originalMap[0].length;
+      const width = loc(oldWidth - 1) + 1, height = loc(oldHeight - 1) + 1;
+      // Every authored terrain position remains exactly the same type after
+      // transformation, including bridges, islands, city tiles and obstacles.
+      m.map = Array.from({ length: height }, (_, r) =>
+        Array.from({ length: width }, (_, c) =>
+          originalMap[Math.min(oldHeight - 1, Math.round(r / STORY_PACING_FACTOR))]
+            [Math.min(oldWidth - 1, Math.round(c / STORY_PACING_FACTOR))]).join(''));
+      m.cities = originalCities.map(city => [
+        city[0], loc(city[1]), loc(city[2]), ...city.slice(3),
+      ]);
+      m.units = originalUnits.map(clonePosition);
+      if (m.goals) {
+        m.goals = Object.fromEntries(Object.entries(m.goals).map(([side, goals]) =>
+          [side, goals.map(goal => [loc(goal[0]), loc(goal[1]), ...goal.slice(2)])]));
+      }
+    } else {
+      m.cities = originalCities.map(city => [...city]);
+      m.units = originalUnits.map(spec => clonePosition(spec));
+    }
+
+    // Increase enemy city defenses without rewriting authored fortress shields,
+    // objective names, scripts, or faction rosters.
+    const ally = side => side === m.player ||
+      (m.teams && m.teams[side] && m.teams[side] === m.teams[m.player]);
+    m.cities = m.cities.map(city => {
+      const next = [...city];
+      if (!ally(next[3]) && Number.isFinite(next[4]))
+        next[4] = Math.min(3, next[4] + 1);
+      return next;
+    });
+
+    const slots = new Set(m.units.map(u => String(u[2]) + ':' + String(u[3])));
+    for (const city of m.cities) slots.add(city[1] + ':' + city[2]);
+    const valid = (c, r, water) => {
+      const code = tile(c, r);
+      return code && code !== 'x' && (code === '.') === water &&
+        !slots.has(c + ':' + r);
+    };
+    const templatesBySide = {};
+    for (const u of m.units) {
+      const opts = u[6] || {};
+      // Copy only existing, ordinary, unled faction formations; never invent
+      // character appearances, copy Elite aces, or duplicate carrier cargo.
+      if (u[5] || opts.cargo || opts.normalOnly || opts.skipNormal ||
+          String(u[1]).startsWith('elite_')) continue;
+      (templatesBySide[u[0]] ||= []).push(u);
+    }
+    function candidate(u) {
+      const water = tile(u[2], u[3]) === '.';
+      for (let distance = 2; distance <= 7; distance++) {
+        for (let dr = -distance; dr <= distance; dr++) {
+          for (let dc = -distance; dc <= distance; dc++) {
+            if (Math.max(Math.abs(dc), Math.abs(dr)) !== distance) continue;
+            const c = u[2] + dc, r = u[3] + dr;
+            if (valid(c, r, water)) {
+              slots.add(c + ':' + r);
+              return [u[0], u[1], c, r, Math.min(3, Math.max(1, u[4] || 1)), null];
+            }
+          }
+        }
+      }
+      return null;
+    }
+    for (const [side, templates] of Object.entries(templatesBySide)) {
+      const count = Math.min(6, Math.max(2,
+        Math.ceil(templates.length * (ally(side) ? 0.28 : 0.42))));
+      let placed = 0;
+      for (let i = 0; i < count * 3 && placed < count; i++) {
+        const newUnit = candidate(templates[i % templates.length]);
+        if (newUnit) {
+          m.units.push(newUnit);
+          placed++;
+        }
+      }
+    }
+
+    // Scripted dialogue/reinforcement phases should advance with the expanded
+    // fighting, rather than concluding while units are still marching.
+    const turnScale = stretch ? 1.5 : 1.65;
+    m.events = (m.events || []).map(event => {
+      const next = clonePosition(event);
+      if (Number.isFinite(event.turn) && event.turn > 1)
+        next.turn = Math.round((event.turn - 1) * turnScale) + 1;
+      return next;
+    });
+    // A defensive hold is an actual turn objective: extending only its loss
+    // timer would still end the mission on turn 5-10.
+    m.win = (Array.isArray(m.win) ? m.win : [m.win]).map(condition =>
+      condition?.hold ? { ...condition, hold: Math.max(17, Math.min(19,
+        Math.round(condition.hold * 1.8))) } : condition);
+    if (m.win.length === 1) m.win = m.win[0];
+    if (m.lose?.turns)
+      m.lose = { ...m.lose, turns: Math.max(27, Math.min(32,
+        Math.ceil(m.lose.turns * 1.7))) };
+    if (Number.isFinite(m.normalTurns) && m.lose?.turns)
+      m.normalTurns = m.lose.turns + 2;
+    m.stars = (m.stars || []).map(star =>
+      Number.isFinite(star.turns)
+        ? { ...star, turns: Math.max(17, Math.min(22, Math.round(star.turns * 1.8))) }
+        : star);
+
+    // Timed reinforcements keep both sides engaged in the middle/late game.
+    // They use the exact frame types already fielded in this mission.
+    function wave(side, amount) {
+      const templates = templatesBySide[side] || [];
+      if (!templates.length) return [];
+      return Array.from({ length: amount }, (_, i) => {
+        const u = templates[i % templates.length];
+        return [side, u[1], u[2], u[3], Math.min(3, u[4] || 1), null];
+      });
+    }
+    const enemies = Object.keys(templatesBySide).filter(side => !ally(side));
+    const friends = Object.keys(templatesBySide).filter(ally);
+    const spawnWave = (turn, enemyCount, friendlyCount) => {
+      const spawn = [
+        ...enemies.flatMap(side => wave(side, enemyCount)),
+        ...friends.flatMap(side => wave(side, friendlyCount)),
+      ];
+      if (spawn.length) m.events.push({ turn, spawn });
+    };
+    spawnWave(7, hold ? 3 : 2, hold ? 2 : 1);
+    spawnWave(12, hold ? 3 : 2, hold ? 2 : 1);
+    if (hold) spawnWave(16, 2, 1);
+    m.longBattleTuning = { stretched: stretch, targetTurns: 18 };
+  }
+
+  for (const m of [...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA,
+                    ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN])
+    longerStoryMission(m);
+
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
