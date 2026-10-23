@@ -18,6 +18,20 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       }
     }
   },
+  "defense-japan": {
+    "cities": 28,
+    "formations": 50,
+    "sides": {
+      "bk": {
+        "cities": 28,
+        "formations": 23
+      },
+      "britannia": {
+        "cities": 0,
+        "formations": 27
+      }
+    }
+  },
   "division-japan": {
     "cities": 44,
     "formations": 46,
@@ -52,11 +66,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "operation-stonehenge": {
     "cities": 37,
-    "formations": 66,
+    "formations": 67,
     "sides": {
       "britannia": {
         "cities": 0,
-        "formations": 30
+        "formations": 31
       },
       "eu": {
         "cities": 37,
@@ -424,7 +438,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "eu-pendragon": {
     "cities": 37,
-    "formations": 256,
+    "formations": 257,
     "sides": {
       "eu": {
         "cities": 12,
@@ -432,17 +446,17 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       },
       "britannia": {
         "cities": 25,
-        "formations": 144
+        "formations": 145
       }
     }
   },
   "cf-pendragon": {
     "cities": 43,
-    "formations": 273,
+    "formations": 274,
     "sides": {
       "cf": {
         "cities": 11,
-        "formations": 117
+        "formations": 118
       },
       "britannia": {
         "cities": 32,
@@ -522,7 +536,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "battle-luoyang": {
     "cities": 65,
-    "formations": 120,
+    "formations": 121,
     "sides": {
       "britannia": {
         "cities": 28,
@@ -530,21 +544,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       },
       "cf": {
         "cities": 37,
-        "formations": 71
-      }
-    }
-  },
-  "defense-japan": {
-    "cities": 28,
-    "formations": 45,
-    "sides": {
-      "bk": {
-        "cities": 28,
-        "formations": 18
-      },
-      "britannia": {
-        "cities": 0,
-        "formations": 27
+        "formations": 72
       }
     }
   },
@@ -676,11 +676,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "eu-cf-luoyang": {
     "cities": 64,
-    "formations": 139,
+    "formations": 140,
     "sides": {
       "eu": {
         "cities": 14,
-        "formations": 79
+        "formations": 80
       },
       "cf": {
         "cities": 50,
@@ -690,15 +690,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "cf-eu-siberia": {
     "cities": 71,
-    "formations": 133,
+    "formations": 67,
     "sides": {
       "cf": {
         "cities": 12,
-        "formations": 73
+        "formations": 37
       },
       "eu": {
         "cities": 59,
-        "formations": 60
+        "formations": 30
       }
     }
   },
@@ -802,21 +802,21 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "cf-eu-central-europe": {
     "cities": 55,
-    "formations": 237,
+    "formations": 235,
     "sides": {
       "cf": {
         "cities": 12,
-        "formations": 118
+        "formations": 113
       },
       "eu": {
         "cities": 43,
-        "formations": 119
+        "formations": 122
       }
     }
   },
   "cf-eu-france": {
     "cities": 34,
-    "formations": 61,
+    "formations": 62,
     "sides": {
       "cf": {
         "cities": 0,
@@ -824,13 +824,13 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       },
       "eu": {
         "cities": 34,
-        "formations": 29
+        "formations": 30
       }
     }
   },
   "rounds-rebellion": {
     "cities": 37,
-    "formations": 277,
+    "formations": 278,
     "sides": {
       "rounds": {
         "cities": 12,
@@ -838,7 +838,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       },
       "britannia": {
         "cities": 25,
-        "formations": 144
+        "formations": 145
       }
     }
   },
@@ -858,7 +858,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "chinese-civil-war": {
     "cities": 32,
-    "formations": 137,
+    "formations": 138,
     "sides": {
       "loyalists": {
         "cities": 21,
@@ -866,7 +866,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
       },
       "eunuchs": {
         "cities": 11,
-        "formations": 71
+        "formations": 72
       }
     }
   },
