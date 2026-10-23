@@ -5927,6 +5927,9 @@
     'bk_yokosuka2', 'br_yokosuka2',
   ]);
   const STORY_PACING_FACTOR = 1.5;
+  // Preserve the lower reinforcement density where it produced stronger
+  // multi-seed outcomes than the more generous allied screening package.
+  const STORY_PACING_LIGHT_REINFORCEMENTS = new Set(['br5', 'cf3', 'eu_ark']);
 
   function longerStoryMission(m) {
     if (STORY_PACING_EXCEPTIONS.has(m.id) || m.id.startsWith('ufn')) return;
@@ -5934,11 +5937,13 @@
     const hold = conditions.some(condition => condition && condition.hold);
     // Already-designed 20+ turn offensive encounters do not need enlargement.
     if (!hold && (!m.lose?.turns || m.lose.turns >= 20)) return;
+    const gentle = STORY_PACING_LIGHT_REINFORCEMENTS.has(m.id);
+    const scale = m.id === 'bk3' ? 1.8 : STORY_PACING_FACTOR;
     const originalMap = m.map;
     const originalUnits = m.units;
     const originalCities = m.cities;
     const stretch = !hold && !STORY_PACING_KEEP_COAST.has(m.id);
-    const loc = n => Math.round(n * STORY_PACING_FACTOR);
+    const loc = n => Math.round(n * scale);
     const tile = (c, r) => m.map[r]?.[c];
     const clonePosition = value => {
       if (Array.isArray(value)) {
@@ -5965,8 +5970,8 @@
       // transformation, including bridges, islands, city tiles and obstacles.
       m.map = Array.from({ length: height }, (_, r) =>
         Array.from({ length: width }, (_, c) =>
-          originalMap[Math.min(oldHeight - 1, Math.round(r / STORY_PACING_FACTOR))]
-            [Math.min(oldWidth - 1, Math.round(c / STORY_PACING_FACTOR))]).join(''));
+          originalMap[Math.min(oldHeight - 1, Math.round(r / scale))]
+            [Math.min(oldWidth - 1, Math.round(c / scale))]).join(''));
       m.cities = originalCities.map(city => [
         city[0], loc(city[1]), loc(city[2]), ...city.slice(3),
       ]);
@@ -6003,7 +6008,7 @@
       const opts = u[6] || {};
       // Clone ordinary equipment from either led or unled formations, but never
       // clone commanders themselves, Elite aces, or carrier cargo.
-      if (opts.cargo || opts.normalOnly || opts.skipNormal ||
+      if ((gentle && u[5]) || opts.cargo || opts.normalOnly || opts.skipNormal ||
           String(u[1]).startsWith('elite_')) continue;
       (templatesBySide[u[0]] ||= []).push(u);
     }
@@ -6024,8 +6029,10 @@
       return null;
     }
     for (const [side, templates] of Object.entries(templatesBySide)) {
-      const count = Math.min(8, Math.max(ally(side) ? 3 : 2,
-        Math.ceil(templates.length * (ally(side) ? 0.65 : 0.24))));
+      const count = gentle
+        ? Math.min(6, Math.max(2, Math.ceil(templates.length * (ally(side) ? 0.28 : 0.42))))
+        : Math.min(8, Math.max(ally(side) ? 3 : 2,
+            Math.ceil(templates.length * (ally(side) ? 0.65 : 0.24))));
       let placed = 0;
       for (let i = 0; i < count * 3 && placed < count; i++) {
         const newUnit = candidate(templates[i % templates.length]);
@@ -6090,8 +6097,8 @@
       ];
       if (spawn.length) m.events.push({ turn, spawn });
     };
-    spawnWave(7, hold ? 3 : 2, hold ? 2 : 2);
-    spawnWave(12, hold ? 3 : 2, hold ? 2 : 2);
+    spawnWave(7, hold ? 3 : 2, hold ? 2 : (gentle ? 1 : 2));
+    spawnWave(12, hold ? 3 : 2, hold ? 2 : (gentle ? 1 : 2));
     if (hold) spawnWave(16, 2, 1);
     m.longBattleTuning = { stretched: stretch, targetTurns: 18 };
   }
