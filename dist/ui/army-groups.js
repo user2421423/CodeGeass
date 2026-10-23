@@ -252,8 +252,8 @@ function armyGroupsDialog(editId = null) {
     const unassigned=E.allUnits(game).filter(u=>u.hp>0 && u.side===game.player &&
       !groups.some(gr=>gr.units.includes(u.id))).length;
     content = '<div class="dialog-footer"><span class="mode-note">'+groups.length+' / '+E.armyGroupLimit(game)+' groups'+
-      (game.mode==='scenario'?' · '+unassigned+' unassigned formations':'')+'</span>'+
-      (game.mode==='scenario'?'<button data-army-organize="true" '+(!interactive()||!unassigned?'disabled':'')+'>Organize unassigned formations</button>':'')+
+      ' · '+unassigned+' unassigned formations</span>'+
+      '<button data-army-organize="true" '+(!interactive()||!unassigned?'disabled':'')+'>Organize unassigned formations</button>'+
       '<button data-army-bulk="hold" '+(!interactive()||!groups.length?'disabled':'')+'>Hold all groups</button>'+
       '<button data-army-bulk="conquer" '+(!interactive()||!groups.length?'disabled':'')+'>Capture remaining cities with all armies</button></div>'+content;
     if (game.mode === 'scenario') content += '<div class="dialog-footer"><button class="small" data-action="scenario-armies">Browse starting formations & fleets</button></div>';
