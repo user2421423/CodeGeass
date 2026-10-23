@@ -56,10 +56,10 @@
       role: 'Armor',
       hull: 'Gloucester Swordsman (Julius)',
       skill: "Ark Fleet — Manufactured Terror / Information Warfare",
-      desc: "Every turn, target any enemy city: enemy units on or within 1 hex of the city lose 1 morale level and 2 movement for their next enemy turn; the city cannot recruit or regenerate shields during its owner's next turn. Every 10 friendly turns, starting on cooldown, also deploy a free Britannian Logres airship at a valid friendly deployment hex. At the start of Julius's friendly turn, enemies within 3 hexes lose 1 morale level.",
+      desc: "Every turn, target any enemy city: enemy units on or within 1 hex of the city lose 1 morale level and 2 movement for their next enemy turn; the city cannot recruit or regenerate shields during its owner's next turn. Every 10 friendly turns, starting on cooldown, also deploy a free Britannian Logres airship on an unoccupied land hex 1–2 hexes from Julius (nearest valid hex first). At the start of Julius's friendly turn, enemies within 3 hexes lose 1 morale level.",
       stats: {},
       fx: {},
-      action: {"name": "Ark Fleet — Manufactured Terror", "verb": "Ark Fleet", "kind": "arkFleet", "cooldown": 0, "desc": "Select any enemy city: enemy units within 1 hex lose 1 morale and 2 movement for their next turn; the city cannot recruit or regenerate shields during its owner's next turn. A free Logres airship deploys when the independent 10-turn timer is ready."},
+      action: {"name": "Ark Fleet — Manufactured Terror", "verb": "Ark Fleet", "kind": "arkFleet", "cooldown": 0, "desc": "Select any enemy city: enemy units within 1 hex lose 1 morale and 2 movement for their next turn; the city cannot recruit or regenerate shields during its owner's next turn. A free Logres airship deploys 1–2 hexes from Julius when the independent 10-turn timer is ready."},
       title: 'Imperial strategist',
     },
     schneizel: {

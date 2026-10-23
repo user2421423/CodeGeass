@@ -336,11 +336,15 @@
       if(u.arkFleetAirshipCD==null)u.arkFleetAirshipCD=10;
       if(u.arkFleetAirshipCD<=0){
         const type='logres_airship';
-        const bases=g.stations.filter(s=>s.owner===u.side).sort((a,b)=>dist(g,a,city)-dist(g,b,city)||b.tier-a.tier);
-        for(const base of bases){
-          const p=nearest(g,base,t=>!isSea(t)&&!TERRAIN[t.terrain]?.blocked&&t.owner===u.side&&!unitAt(g,t)&&!stationAt(g,t));
-          if(p){airship=newUnit(g,type,u.side,p.c,p.r,1,null,false);u.arkFleetAirshipCD=10;break;}
-        }
+        // Spawn next to Julius, not near the targeted city. Friendly territory
+        // is not required: the airship is deployed by his fleet, not a city.
+        const positions=within(g,u,2).filter(p=>{
+          const d=dist(g,u,p);
+          return d>=1&&d<=2&&!isSea(p)&&!TERRAIN[p.terrain]?.blocked&&
+            !unitAt(g,p)&&!stationAt(g,p);
+        }).sort((a,b)=>dist(g,u,a)-dist(g,u,b)||a.r-b.r||a.c-b.c);
+        const p=positions[0];
+        if(p){airship=newUnit(g,type,u.side,p.c,p.r,1,null,false);u.arkFleetAirshipCD=10;}
       }
       u.feintCD=0;u.feintUsedTurn=g.turn;
       log(g,'Ark Fleet spreads terror around '+city.name+(airship?' and deploys a free Logres airship':'' )+'.',u.side);
