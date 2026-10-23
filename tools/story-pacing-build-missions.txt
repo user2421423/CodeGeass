@@ -6001,9 +6001,9 @@
     const templatesBySide = {};
     for (const u of m.units) {
       const opts = u[6] || {};
-      // Copy only existing, ordinary, unled faction formations; never invent
-      // character appearances, copy Elite aces, or duplicate carrier cargo.
-      if (u[5] || opts.cargo || opts.normalOnly || opts.skipNormal ||
+      // Clone ordinary equipment from either led or unled formations, but never
+      // clone commanders themselves, Elite aces, or carrier cargo.
+      if (opts.cargo || opts.normalOnly || opts.skipNormal ||
           String(u[1]).startsWith('elite_')) continue;
       (templatesBySide[u[0]] ||= []).push(u);
     }
@@ -6024,8 +6024,8 @@
       return null;
     }
     for (const [side, templates] of Object.entries(templatesBySide)) {
-      const count = Math.min(6, Math.max(2,
-        Math.ceil(templates.length * (ally(side) ? 0.28 : 0.42))));
+      const count = Math.min(8, Math.max(ally(side) ? 3 : 2,
+        Math.ceil(templates.length * (ally(side) ? 0.65 : 0.24))));
       let placed = 0;
       for (let i = 0; i < count * 3 && placed < count; i++) {
         const newUnit = candidate(templates[i % templates.length]);
@@ -6090,8 +6090,8 @@
       ];
       if (spawn.length) m.events.push({ turn, spawn });
     };
-    spawnWave(7, hold ? 3 : 2, hold ? 2 : 1);
-    spawnWave(12, hold ? 3 : 2, hold ? 2 : 1);
+    spawnWave(7, hold ? 3 : 2, hold ? 2 : 2);
+    spawnWave(12, hold ? 3 : 2, hold ? 2 : 2);
     if (hold) spawnWave(16, 2, 1);
     m.longBattleTuning = { stretched: stretch, targetTurns: 18 };
   }
