@@ -56,9 +56,16 @@
       if(kind==='cityCaptured')a.cities++;
       if(kind==='unitDestroyed'&&data.byCombat)a.kills++;
       if(kind==='damage')a.damage+=Math.max(0,Math.round(data.value||0));}}
-  function warSpend(g,side,cost,purpose='military'){if(cost)
+  function warSpend(g,side,cost,purpose='military'){if(cost){
     recordWarEvent(g,'spending',side,{purpose,credits:cost.credits||0,
-      industry:cost.industry||0,science:cost.science||0,sakuradite:cost.sakuradite||0});}
+      industry:cost.industry||0,science:cost.science||0,sakuradite:cost.sakuradite||0});
+    // Optional observer-simulation diagnostics. No additional state in live games.
+    if(g.balanceMeasureSpending){
+      const bySide=(g.balanceSpending||={})[side]||=(({}));
+      const totals=bySide[purpose]||={credits:0,industry:0,science:0,sakuradite:0};
+      for(const key of ['credits','industry','science','sakuradite'])totals[key]+=cost[key]||0;
+    }
+  }}
   function finishWarTurn(g,turn=g.turn){const r=ensureWarReport(g);
     if(turn>r.lastCompleted){r.snapshots.push(warSnapshot(g,turn));r.lastCompleted=turn;}
     return r;}

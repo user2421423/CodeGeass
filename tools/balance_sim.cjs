@@ -194,6 +194,8 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
   const g = E.createGame(player, difficulty, 'conquest', seed >>> 0);
   // Use rival AI preparation rules for every power in an observer simulation.
   if (equalAi) g.player = '__observer__';
+  // Attribute each purchase by purpose; never alter the AI's choices or economy.
+  g.balanceMeasureSpending = true;
   const wanted = new Set(snapshotTurns);
   const timeline = [];
   const start = snapshot(g);
@@ -260,7 +262,7 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
     elapsedMs: +elapsedMs.toFixed(2),
     start,
     final: end,
-    actions: counters,
+    actions: { ...counters, spendingByPurpose: g.balanceSpending || {} },
     timeline,
   };
 }
@@ -387,6 +389,18 @@ function markdown(report) {
         `| ${player} | ${difficulty} | ${a.avgFirstStrikeTurn || '—'} | ${MAJORS.map(s => a.avgStrikes[s].launched).join(' / ')} | ${sum('intercepted')} | ${sum('citiesErased')} | ${sum('depositsDestroyed')} | ${a.avgFinalDeposits} |`,
       );
     }
+  lines.push('', '## Recorded credit spending by AI faction and purchase type', '',
+    '| AI faction | Recruitment | Reinforcements | Repairs | Infrastructure | F.L.E.I.J.A. | Eliminators | Total |',
+    '|---|---:|---:|---:|---:|---:|---:|---:|');
+  for (const side of MAJORS) {
+    const spent = {};
+    for (const run of report.results) for (const [purpose, amount] of Object.entries(run.actions.spendingByPurpose?.[side] || {}))
+      spent[purpose] = (spent[purpose] || 0) + (amount.credits || 0);
+    const parts = ['production', 'reinforcement', 'repair', 'construction', 'F.L.E.I.J.A.', 'Eliminator'];
+    const values = parts.map(kind => spent[kind] || 0);
+    const total = Object.values(spent).reduce((n, v) => n + v, 0);
+    lines.push(`| ${side} | ${[...values, total].map(n => Math.round(n).toLocaleString('en-US')).join(' | ')} |`);
+  }
   lines.push(
     '',
     '## Interpretation notes',
