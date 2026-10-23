@@ -33,7 +33,7 @@
     '..........................wwpmmmpppppppppppfppppffpfffffwwww.w..........................wwwpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppwp..................',
     '...........................wppmmmmppppppppppfppfpfppfffwf...wpw........................wwppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppww...................',
     '............................pppmmpmpppppppppppppppfffppffw.w...w.........................ppppmpmmmmppmmppwpwwppppppppppppppppppppppppppppppppppppppppppppppppppw.w..................',
-    '...........................wpppmmmmpppppppppppppppffpfpwwpw..............................ppppmpwwpppppppw.w.wpppppppppppppppppppppppppppppppdppppppppppppppppw..w...................',
+    '...........................wpppmmmmpppppppppppppppffpfpwwpw..............................ppppmpwwpppppppw.w.wpppppppppppppppppppppppppppppppdppppppppppppppppw......................',
     '............................pppmpmpmppppppppppppppfffpw..............................wwwwppwww.ww.wppppp......wppppppppddddppppppppmppppdddddddddddpppppppppww..wpw.................',
     '...........................wpppmmmmmmpppppppppfpppffpw...............................pppppp....wpw.ppppwwwww..pmmmpppddddpdpppppppppppppdpppdddddddpppppppw....w....................',
     '............................ppppmmppmmpppppppfpfpffpf................................wpppp....w..ww.pw.wpppppppppppppdddpddppppmdddddddppppddddppppppwwwwp......p...................',

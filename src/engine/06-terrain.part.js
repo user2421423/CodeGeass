@@ -176,6 +176,7 @@
   const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21],
     [107,27], [111,34], [111,35]];
   const TSUGARU_STRAIT = [160, 19];
+  const SOYA_STRAIT = [160, 17];
   function coastalTileOccupied(g, c, r) {
     return g.units.some(u => u.hp > 0 && u.c === c && u.r === r) ||
       g.stations?.some(s => (s.c === c && s.r === r) ||
@@ -200,6 +201,21 @@
     if (WORLD_ROWS[tr]?.[tc] === '.' && strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
       setTileTerrain(g, strait, 'sea');
       setTileOwner(g, strait, null);
+    }
+    // Soya Strait: a single sea hex prevents land movement from Hokkaido to
+    // Russian Sakhalin. Correct existing Conquest saves regardless of occupancy.
+    // Land formations on the former coast remain in place and automatically
+    // become embarked transports via atSea(); no unit or capture is erased.
+    if (g.mode === 'conquest' && g.cols === WORLD.cols && g.rows === WORLD.rows) {
+      const [sc, sr] = SOYA_STRAIT;
+      if (WORLD_ROWS[sr]?.[sc] === '.') {
+        const gap = tile(g, sc, sr);
+        if (gap) {
+          setTileTerrain(g, gap, 'sea');
+          setTileOwner(g, gap, null);
+          delete gap.provinceCity;
+        }
+      }
     }
     const filled = [];
     for (const [c, r] of CASPIAN_LAND_FIXES) {
