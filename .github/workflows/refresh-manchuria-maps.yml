@@ -1,0 +1,51 @@
+name: Refresh Manchuria scenario maps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/scenarios-eu-cf-manchuria.js'
+      - '.github/workflows/refresh-manchuria-maps.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-manchuria-scenario
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble game scripts
+        run: node tools/build_sources.cjs
+      - name: Install browser renderer
+        run: npm install --prefix /tmp/manchuria-tools --no-save --no-package-lock playwright-core@1.57.0
+      - name: Regenerate only the Manchuria map and gallery thumbnail
+        env:
+          NODE_PATH: /tmp/manchuria-tools/node_modules
+          SCENARIO_IDS: eu-cf-manchuria
+        run: |
+          node tools/generate-hires-regional-maps.cjs
+          node tools/generate-scenario-previews.cjs
+      - name: Publish refreshed images to main
+        run: |
+          git add -- dist/scenario-hires/eu-cf-manchuria.webp dist/scenario-previews/eu-cf-manchuria.webp dist/scenario-previews/metadata.js
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Refresh Manchuria map after coastline correction"
+            git restore --worktree -- .
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

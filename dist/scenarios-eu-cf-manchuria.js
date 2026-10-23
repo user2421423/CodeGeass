@@ -34,6 +34,55 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
+  // The southern coastline is sampled from the Korean atlas. The independent
+  // northern mask was only surveyed east of 130 E and north of 43.5 N.
+  function koreanLandRaw(){
+    const atlas=root.KOREA_GEOGRAPHY||(typeof require==='function'?
+      require('./korea-landmask.js'):null);
+    if(!atlas?.land)throw Error('Manchuria requires korea-landmask.js');
+    const raw=typeof atob==='function'?atob(atlas.land):
+      Buffer.from(atlas.land,'base64').toString('latin1');
+    if(raw.length!==184*160/8)throw Error('Invalid Korean shoreline mask');
+    return raw;
+  }
+  const SHORE=[[117.3,38.42],[119,38.68],[120.3,39.8],
+    [121,40.65],[121.4,40.48]];
+  function shoreLat(lon){
+    for(let i=1;i<SHORE.length;i++)if(lon<=SHORE[i][0]){
+      const a=SHORE[i-1],b=SHORE[i],t=(lon-a[0])/(b[0]-a[0]);
+      return a[1]+t*(b[1]-a[1]);
+    }
+    return 40.48;
+  }
+  function landAt(lon,lat,raw){
+    if(lat>=43.5)return true;
+    if(lon>=123.5){
+      if(lon>=137||lat<=31)return false;
+      const r=Math.max(0,Math.min(159,Math.round((43.5-lat)*160/12.5-.5)));
+      const c=Math.max(0,Math.min(183,Math.round(
+        (lon-123.5)*184/13.5-.5-.5*(r&1))));
+      const i=r*184+c;
+      return !!(raw.charCodeAt(i>>3)&(128>>(i&7)));
+    }
+    if(lon<117.3)return true;
+    // Preserve the authored Liaodong tongue and Bohai shoreline.
+    if(lon>=121.35&&lon<=122.35&&lat>=38.78&&lat<=40.65)return true;
+    if(lon<=121.4)return lat>=shoreLat(lon);
+    return lat>=40.5-(lon-121.4)*.67;
+  }
+  function coastDry(c,r,raw){
+    const p=geo(c,r),dx=(BOUNDS.east-BOUNDS.west)/COLS,
+      dy=(BOUNDS.north-BOUNDS.south)/ROWS;
+    // IMPORTANT: the encoded mask stores 9 (all land) outside its surveyed
+    // northeast corner. Applying it below 43.5N creates a false Sea of Japan
+    // landmass, and applying it west of 130E bypasses the proper shoreline.
+    if(p.lon>=130&&p.lat>=43.5)return Math.round(
+      manchuriaNorthDry(r*COLS+c)*25/9);
+    let dry=0;
+    for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)
+      if(landAt(p.lon+x*dx/5,p.lat+y*dy/5,raw))dry++;
+    return dry;
+  }
   function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   // The Greater/Lesser Khingan, Changbai Mountains and Liaodong hills.
   // Open rail corridors and natural lowland passes remain accessible to every faction.
@@ -83,7 +132,7 @@
     }
     g.scenario={id:'eu-cf-manchuria',key:'manchuria',title:'Invasion of Manchuria',version:1,
       phase:'northern-breakthrough',aiDoctrine:'europe',groups:[],funding:{},
-      bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS};
+      bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,manchuriaCoastVersion:2};
     // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
     const eliteIds=Object.keys(E.ELITE_FORCES);
@@ -93,54 +142,17 @@
       cf:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('cf'))
     };
-    // Sea routes remain unrestricted across the strait and the entire
-    // Kamchatka–Aleutian flank, rather than stopping five hexes offshore.
-    // Reuse the existing GSHHG Korean shoreline. Extend the Bohai/Liaodong
-    // coast westward without introducing sea tiles north of 43.5 degrees.
-    const atlas=root.KOREA_GEOGRAPHY||(typeof require==='function'?
-      require('./korea-landmask.js'):null);
-    if(!atlas?.land)throw Error('Manchuria requires korea-landmask.js');
-    const raw=typeof atob==='function'?atob(atlas.land):
-      Buffer.from(atlas.land,'base64').toString('latin1');
-    if(raw.length!==184*160/8)throw Error('Invalid Korean shoreline mask');
-    const shore=[[117.3,38.42],[119,38.68],[120.3,39.8],
-      [121,40.65],[121.4,40.48]];
-    function shoreLat(lon){
-      for(let i=1;i<shore.length;i++)if(lon<=shore[i][0]){
-        const a=shore[i-1],b=shore[i],t=(lon-a[0])/(b[0]-a[0]);
-        return a[1]+t*(b[1]-a[1]);
-      }
-      return 40.48;
-    }
-    function landAt(lon,lat){
-      if(lat>=43.5)return true;
-      if(lon>=123.5){
-        if(lon>=137||lat<=31)return false;
-        const r=Math.max(0,Math.min(159,Math.round((43.5-lat)*160/12.5-.5)));
-        const c=Math.max(0,Math.min(183,Math.round(
-          (lon-123.5)*184/13.5-.5-.5*(r&1))));
-        const i=r*184+c;
-        return !!(raw.charCodeAt(i>>3)&(128>>(i&7)));
-      }
-      if(lon<117.3)return true;
-      // The Liaodong peninsula is a narrow land tongue, with sea on both sides.
-      if(lon>=121.35&&lon<=122.35&&lat>=38.78&&lat<=40.65)return true;
-      if(lon<=121.4)return lat>=shoreLat(lon);
-      return lat>=40.5-(lon-121.4)*.67;
-    }
-    const dx=(BOUNDS.east-BOUNDS.west)/COLS,
-      dy=(BOUNDS.north-BOUNDS.south)/ROWS;
+    // Use each shoreline source only inside its actual sampled geography.
+    // This keeps the Russian northern coast and the Korean/Japanese sea
+    // consistent with their real latitudes, without moving cities or hexes.
+    const raw=koreanLandRaw();
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
-      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);let dry=0;
-      // True Sea of Japan cells north of 43.5 N are not dry land.
-      // Elsewhere retain the established 25-sample mixed-coast method.
-      if(p.lon>=123.5&&p.lat>=40.5)dry=Math.round(manchuriaNorthDry(i)*25/9);
-      else for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)
-        if(landAt(p.lon+x*dx/5,p.lat+y*dy/5))dry++;
+      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
+      const dry=coastDry(c,r,raw);
       return {c,r,owner:null,terrain:dry<5?'sea':
         dry<=20?'coast':landscape(p,c,r)};
     });
-        for(const [name,lon,lat,owner,tier,fort] of CITIES){
+    for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
@@ -255,6 +267,63 @@
     E.log(g,'E.U. armored armies strike from Mongolia and Siberia toward Harbin, Changchun and Shenyang; the Federation holds river lines and industrial cities.',player);
     return g;
   }
+  // Existing campaigns store the whole tactical board. Correct only the
+  // false-water-as-land band, leaving captured cities, armies and damage intact.
+  // Keeping saveVersion at 1 prevents an otherwise unnecessary restart.
+  function migrateSavedTerrain(g){
+    if(g?.mode!=='scenario'||g.scenario?.id!=='eu-cf-manchuria'||
+       g.scenario.manchuriaCoastVersion===2||
+       g.cols!==COLS||g.rows!==ROWS||g.tiles?.length!==COLS*ROWS)return false;
+    const raw=koreanLandRaw();
+    const index=p=>p.r*COLS+p.c;
+    const cityCells=new Set(g.stations.map(index));
+    const occupied=new Set(g.units.filter(u=>u.hp>0).map(index));
+    const previous=new Map(),newSea=new Set();
+    let altered=0;
+    for(const t of g.tiles){
+      const p=geo(t.c,t.r);
+      // Only these hexes were affected by the mistaken mask condition.
+      if(p.lon<123.5||p.lat<40.5||p.lat>=43.5)continue;
+      const dry=coastDry(t.c,t.r,raw);
+      const terrain=dry<5?'sea':dry<=20?'coast':null;
+      if(!terrain||terrain===t.terrain)continue;
+      const i=index(t);
+      previous.set(i,{owner:t.owner,provinceCity:t.provinceCity});
+      // Never delete a built or captured settlement in an old save.
+      t.terrain=terrain==='sea'&&cityCells.has(i)?'coast':terrain;
+      if(t.terrain==='sea'){
+        t.owner=null;delete t.provinceCity;newSea.add(i);
+      }
+      altered++;
+    }
+    // Any ground formation on a newly corrected water hex goes to the
+    // nearest unoccupied, friendly dry/coastal hex. Ships and airships stay.
+    for(const u of g.units.filter(u=>u.hp>0)){
+      const old=index(u);
+      if(!newSea.has(old))continue;
+      const type=E.TYPES[u.type];
+      if(type?.naval==='ship'||type?.air)continue;
+      const at=E.nearestTile(g,u,t=>t.owner===u.side&&
+        t.terrain!=='sea'&&t.terrain!=='offmap'&&
+        !occupied.has(index(t))&&!cityCells.has(index(t)),Math.max(COLS,ROWS));
+      if(at){
+        occupied.delete(old);occupied.add(index(at));
+        u.c=at.c;u.r=at.r;delete u.destination;
+        for(const cargo of u.cargo||[]){cargo.c=u.c;cargo.r=u.r;}
+      }else{
+        // Do not destroy or strand an irreplaceable old-save formation.
+        const tile=g.tiles[old],prior=previous.get(old);
+        tile.terrain='coast';tile.owner=prior?.owner||u.side;
+        if(prior?.provinceCity!=null)tile.provinceCity=prior.provinceCity;
+      }
+    }
+    g.scenario.manchuriaCoastVersion=2;
+    if(altered){
+      g.mapRevision=(g.mapRevision||0)+1;
+      g.mapTerrainRevision=(g.mapTerrainRevision||0)+1;
+    }
+    return true;
+  }
   function onTurn(){return false;}
   function strategicScore(g,side){
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
@@ -274,7 +343,7 @@
   const api={id:'eu-cf-manchuria',title:'Invasion of Manchuria',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     ports:PORTS,fleetData:FLEETS,rivers:RIVERS,
-    create,onTurn,objective,winner,strategicScore,orderGroup};
+    create,onTurn,objective,winner,strategicScore,orderGroup,migrateSavedTerrain};
   api.meta={elite:true,saveVersion:1,
     map:{centreSampled:true,overlays:['regionalRivers'],homeZoom:2.5,overviewMarkers:true},
     ai:{doctrine:'europe',recovery:true,routeBias:'eu',
