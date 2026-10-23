@@ -619,4 +619,31 @@
       // first leave the city hex; all regular costs and checks still apply.
       for (const s of yards) tryBuild(s, menus.get(s), [1]);
     }
+    // Conquest only: armies, fleets, repairs and strategic projects were funded
+    // first. Reinvest genuinely unused treasury in safe, productive cities.
+    // Unlike the ordinary development pass, large empires can upgrade multiple
+    // cities (or the same city twice) without an artificial three-upgrade cap.
+    // Retain next-turn military reserves and all strategic-weapon savings.
+    if (g.mode === 'conquest' && g.turn >= 2) {
+      const nextIncome = income(g, side);
+      const creditBuffer = Math.max(500, ordinaryBudget.credits * 2,
+        Math.round(nextIncome.credits * 0.75));
+      const industryBuffer = Math.max(130, ordinaryBudget.industry * 2,
+        Math.round(nextIncome.industry * 0.75));
+      const canInvest = cost => affordable(cost) &&
+        spendable() - cost.credits >= creditBuffer &&
+        e.industry - reserveInd - (cost.industry || 0) >= industryBuffer;
+      const safeCities = bases.filter(s => !s.capital && front(s) >= 4 && cityTierOf(s) < 3)
+        .sort((a, b) => cityTierOf(a) - cityTierOf(b) || front(a) - front(b) || a.id - b.id);
+      const limit = Math.min(12, Math.ceil(bases.length / 8));
+      let investments = 0;
+      for (const s of safeCities) {
+        while (investments < limit && cityTierOf(s) < 3 && !cityTierReason(g, s)) {
+          const cost = decreePrice(cityTierCost(s), s);
+          if (!canInvest(cost) || !upgradeCityTier(g, s.id).ok) break;
+          investments++;
+        }
+        if (investments >= limit) break;
+      }
+    }
   }
