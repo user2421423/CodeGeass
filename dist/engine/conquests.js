@@ -1040,14 +1040,14 @@
   // Pendragon hex so the two commanders never compete for the same tile.
   charlesWorld[2] = -114;
   charlesWorld[3] = 74 - 21 * (128 / 75);
-  const japaneseStage = [[160,17],[160,18],[162,18],[159,19],[160,20],[158,22],[160,22],[155,23],
+  const japaneseStage = [[160,18],[162,18],[159,19],[160,20],[158,22],[160,22],[155,23],
     [156,23],[159,22],[157,23],[155,24],[159,21],[161,18],[158,23],[156,24]];
   const philippineStage = [[149,33],[150,33],[150,36],[151,36],[152,36],[150,37],[151,37],[151,38],
     [152,38],[150,39],[151,39],[152,39],[152,40],[150,35],[150,34]];
   // Pearl Harbor has one Britannian-owned ground hex at this map scale.
   // Three extra naval formations are independently anchored in NAVY_DATA.
   const hawaiianStage = [[10,31]];
-  const alaskanStage = [[14,7],[16,6],[13,7],[15,6],[16,7],[11,7],[17,6]];
+  const alaskanStage = [[14,7],[16,6],[13,7],[15,6],[16,7],[11,7],[17,6],[12,7]];
   const greenlandStage = [[64,6],[65,5],[66,6],[65,7]];
   const worldStage = [...japaneseStage,...philippineStage,...hawaiianStage,...alaskanStage,...greenlandStage];
   const movableWorld = worldBritannian.filter(a => a !== bismarckWorld && a !== charlesWorld);
