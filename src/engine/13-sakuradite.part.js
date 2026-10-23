@@ -116,14 +116,9 @@
     );
     return d.name;
   }
-  // A surrendering power's mines and half its Sakuradite pass to the conqueror.
+  // On capitulation, only mine ownership transfers, never stockpiled Sakuradite.
   function annexDeposits(g, loser, winner) {
     for (const d of g.sites || []) if (d.city == null && d.owner === loser) d.owner = winner;
-    const e = funds(g, loser),
-      w = funds(g, winner);
-    if (!e || !w) return;
-    w.sakuradite = (w.sakuradite || 0) + Math.round((e.sakuradite || 0) / 2);
-    e.sakuradite = 0;
   }
   // Refineries at mines of their own (deposits under a city use the city's refinery building).
   function refineReason(g, d) {

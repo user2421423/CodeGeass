@@ -587,11 +587,10 @@
         kill(g, v, null, true); // also sinks the Knightmares aboard a Carrier-Battleship
         units++;
       }
-    const e = funds(g, loser),
-      w = funds(g, winner);
-    w.credits += Math.round(e.credits / 2);
-    w.industry += Math.round(e.industry / 2);
-    e.credits = e.industry = 0;
+    // Capitulation transfers territory and mines, never the defeated treasury.
+    const e = funds(g, loser);
+    if (e) for (const resource of ['credits', 'industry', 'science', 'sakuradite'])
+      e[resource] = 0;
     annexDeposits(g, loser, winner);
     log(
       g,
