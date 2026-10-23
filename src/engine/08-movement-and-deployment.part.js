@@ -587,10 +587,17 @@
         kill(g, v, null, true); // also sinks the Knightmares aboard a Carrier-Battleship
         units++;
       }
-    // Capitulation transfers territory and mines, never the defeated treasury.
-    const e = funds(g, loser);
-    if (e) for (const resource of ['credits', 'industry', 'science', 'sakuradite'])
-      e[resource] = 0;
+    const e = funds(g, loser), w = funds(g, winner);
+    if (g.mode === 'conquest') {
+      // Conquest capitulation transfers territory and mines, never stockpiles.
+      for (const resource of ['credits', 'industry', 'science', 'sakuradite'])
+        e[resource] = 0;
+    } else {
+      // Preserve the existing independent-scenario surrender rules.
+      w.credits += Math.round(e.credits / 2);
+      w.industry += Math.round(e.industry / 2);
+      e.credits = e.industry = 0;
+    }
     annexDeposits(g, loser, winner);
     log(
       g,

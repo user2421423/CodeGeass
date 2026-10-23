@@ -116,9 +116,15 @@
     );
     return d.name;
   }
-  // On capitulation, only mine ownership transfers, never stockpiled Sakuradite.
+  // Conquest capitulation transfers only mine ownership, not stored Sakuradite.
   function annexDeposits(g, loser, winner) {
     for (const d of g.sites || []) if (d.city == null && d.owner === loser) d.owner = winner;
+    if (g.mode === 'conquest') return;
+    // Preserve the pre-existing independent-scenario surrender reward.
+    const e = funds(g, loser), w = funds(g, winner);
+    if (!e || !w) return;
+    w.sakuradite = (w.sakuradite || 0) + Math.round((e.sakuradite || 0) / 2);
+    e.sakuradite = 0;
   }
   // Refineries at mines of their own (deposits under a city use the city's refinery building).
   function refineReason(g, d) {
