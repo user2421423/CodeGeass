@@ -326,10 +326,10 @@
     if (action.kind === 'arkFleet') {
       const city=targetId==null?options[0]:options.find(s=>s.id===targetId);
       if(!city)return {ok:false,reason:'Choose an enemy city'};
-      city.expArkFleet={source:u.id,owner:city.owner,turns:2};
-      for(const enemy of g.units)if(enemy.hp>0&&foe(g,enemy.side,u.side)&&!atSea(g,enemy)&&dist(g,enemy,city)<=3){
+      city.expArkFleet={source:u.id,owner:city.owner,turns:1};
+      for(const enemy of g.units)if(enemy.hp>0&&foe(g,enemy.side,u.side)&&dist(g,enemy,city)<=1){
         lowerMorale(g,enemy,1);
-        enemy.expArkFleetSlow={side:enemy.side,turns:2,penalty:2};
+        enemy.expArkFleetSlow={side:enemy.side,turns:1,penalty:2};
       }
       // Independent deployment timer; ordinary Ark Fleet use never resets it.
       let airship=null;

@@ -233,7 +233,7 @@
     if(u.cmd==='julius'&&!feintReason(g,u)){
       const targets=actionTargets(g,u);
       const score=s=>{
-        const enemy=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&dist(g,v,s)<=3);
+        const enemy=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&dist(g,v,s)<=1);
         const friendly=g.units.filter(v=>v.hp>0&&v.side===u.side&&dist(g,v,s)<=5);
         return (s.capitalOf===s.owner?18:0)+(s.tier||1)*4+
           (s.maxShield?12*s.shield/Math.max(1,s.maxShield):0)+

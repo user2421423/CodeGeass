@@ -77,6 +77,7 @@
     if (f.firstStrike && !u.expKallenReposition && !u.skillReposition &&
         t.naval !== 'ship') n += u.expKallenMoveBank || 0;
     if (u.expKallenSlowActive) n = Math.max(1, n - 2);
+    if (u.expArkFleetSlow) n = Math.max(1, n - (u.expArkFleetSlow.penalty || 2));
     if(u.expMiguelSupply)n=Math.max(0,n-2);
     return n;
   }

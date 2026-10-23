@@ -131,6 +131,11 @@
           v.morale = v.expCharlesMemoryRewrite.previousMorale;
           delete v.expCharlesMemoryRewrite;
         }
+        // Ark Fleet's movement disruption ends only after the target's full action phase.
+        if(v.expArkFleetSlow?.side===outgoing){
+          v.expArkFleetSlow.turns--;
+          if(v.expArkFleetSlow.turns<=0)delete v.expArkFleetSlow;
+        }
         // Slow lasts through the target faction's next action phase.
         delete v.expKallenSlowActive;
         if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
@@ -138,7 +143,13 @@
         if(v.expSmilasSuppression&&v.expSmilasSuppressionTurn<g.turn)delete v.expSmilasSuppression;
         if(v.despairWeakened?.source==='zi')delete v.despairWeakened;
       }
-      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing){station.expSupplyBlocked.turns=(station.expSupplyBlocked.turns||1)-1;if(station.expSupplyBlocked.turns<=0)delete station.expSupplyBlocked;}}
+      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing){station.expSupplyBlocked.turns=(station.expSupplyBlocked.turns||1)-1;if(station.expSupplyBlocked.turns<=0)delete station.expSupplyBlocked;}
+      // End Ark Fleet's recruitment and shield shutdown after one full defender turn.
+      for(const city of g.stations)if(city.expArkFleet?.owner===outgoing){
+        city.expArkFleet.turns--;
+        if(city.expArkFleet.turns<=0)delete city.expArkFleet;
+      }
+    }
     if (outgoing && outgoing !== side)
       for (const u of g.units)
         if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
@@ -177,16 +188,6 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
-    // City disruption lasts for two full defender action phases, without
-    // accidentally expiring before the affected side can act.
-    for(const city of g.stations)if(city.expArkFleet?.owner===side){
-      city.expArkFleet.turns--;
-      if(city.expArkFleet.turns<=0)delete city.expArkFleet;
-    }
-    for(const enemy of g.units)if(enemy.hp>0&&enemy.side===side&&enemy.expArkFleetSlow){
-      enemy.expArkFleetSlow.turns--;
-      if(enemy.expArkFleetSlow.turns<=0)delete enemy.expArkFleetSlow;
-    }
     // Information Warfare is a friendly-turn pulse, not a continuous aura.
     for(const julius of mine.filter(v=>v.cmd==='julius'&&!atSea(g,v))){
       if(julius.arkFleetAirshipCD==null)julius.arkFleetAirshipCD=10;
