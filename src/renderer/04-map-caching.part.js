@@ -19,7 +19,8 @@ function mapLayerFresh(m, scale, dpr, w, h) {
 // The static geographic layer is cached independently of the dynamic political
 // layer. A capture invalidates tint/borders, never the costly coastlines.
 const MAP_ATLAS_TILE = 960;
-const MAP_ATLAS_PAD = 5;
+// Overscan must cover the shared 12px feathered relief on every side.
+const MAP_ATLAS_PAD = 48;
 const MAP_ATLAS_SCALE_STEP = 1.25;
 const mapAtlasTiles = new Map(); // legacy Conquest / combined layers
 const mapAtlasStaticTiles = new Map();
@@ -172,7 +173,7 @@ function preloadRegionalMapImage(id) {
   while (mapAtlasHiResImages.size > (mapAtlasMobile ? 1 : 3))
     mapAtlasHiResImages.delete(mapAtlasHiResImages.keys().next().value);
   entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp' +
-    '?v=20261023-cartography';
+    '?v=20261023-relief-borders';
   return entry;
 }
 let mapAtlasStrategicOwners = { tiles: null, revision: -1, source: null, canvas: null };
@@ -263,7 +264,7 @@ function updateMapFallback() {
     }
   };
   low.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp' +
-    '?v=20261023-cartography';
+    '?v=20261023-relief-borders';
 }
 function refreshMapAtlas(scale) {
   const revision = game.mapRevision || 0;

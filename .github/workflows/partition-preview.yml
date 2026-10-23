@@ -20,7 +20,7 @@ permissions:
 
 concurrency:
   group: partition-preview-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   regenerate:

@@ -36,6 +36,50 @@ const owner=row=>centralOutposts.has(row[0])||row[1]>=-110&&row[1]<=-89.5
 const cityData=places.map(row=>[...row,owner(row),
  owner(row)==='remnants'?(heartlandHubs.has(row[0])?3:2):3,false]);
 function geo(c,r){return {lon:B.west+(c+.5+.5*(r&1))*(B.east-B.west)/C,lat:B.north-(r+.5)*(B.north-B.south)/R};}
+
+// Political-map relief only: leave every gameplay terrain hex and existing
+// save unchanged. The old coarse geography produced huge axis-aligned boxes.
+function visualReliefTerrain(tile) {
+  if (['sea','offmap','coast','urban','crater'].includes(tile.terrain))
+    return tile.terrain;
+  const {lon,lat}=geo(tile.c,tile.r);
+  // World-coordinate variation: the visual does not depend on camera, tiles
+  // currently in view, or ownership.
+  const noise=.32*Math.sin(lon*1.73+lat*.82)*Math.sin(lat*1.91-lon*.37)
+    +.19*Math.sin(lon*3.17-lat*2.12);
+  const segmentDistance=(a,b)=>{
+    const k=Math.cos(lat*Math.PI/180);
+    const x=(lon-a[0])*k,y=lat-a[1],dx=(b[0]-a[0])*k,dy=b[1]-a[1];
+    const u=Math.max(0,Math.min(1,(x*dx+y*dy)/(dx*dx+dy*dy||1)));
+    return Math.hypot(x-u*dx,y-u*dy);
+  };
+  // Coast Mountains, Canadian Rockies, US Rockies, Cascades, Sierra Nevada,
+  // and the much narrower Appalachians. These are belts, not bounding boxes.
+  const belts=[
+    [[-130,61],[-123,54],2.5],
+    [[-123,54],[-115.5,48],2.7],
+    [[-115.5,48],[-109.5,42],2.5],
+    [[-109.5,42],[-106.1,35],2.4],
+    [[-125,50],[-121,43],1.65],
+    [[-121,43],[-118,36],1.5],
+    [[-84,42],[-81,36],1.2],
+    [[-81,36],[-83.5,32.5],1.0],
+  ];
+  if (belts.some(([a,b,width]) => segmentDistance(a,b) < width*(.92+noise*.37)))
+    return 'mountain';
+  const ellipse=(x,y,w,h)=>((lon-x)/w)**2+((lat-y)/h)**2;
+  if (Math.min(ellipse(-116.6,39.4,5.8,4.1),
+               ellipse(-112.4,34.1,5.5,4.0),
+               ellipse(-106.9,32.5,3.6,2.2)) < .85+noise*.23)
+    return 'desert';
+  const borealLine=52.6+1.55*Math.sin(lon*.23)
+    +.9*Math.sin(lon*.77+lat*.12)+noise*.85;
+  if (lat>borealLine || (lat>34&&lat<49 &&
+      lon>-89+1.8*Math.sin(lat*.52)+noise*1.5))
+    return 'forest';
+  return 'plains';
+}
+
 function locate(lon,lat){const r=Math.max(0,Math.min(R-1,Math.round((B.north-lat)*R/(B.north-B.south)-.5)));return {r,c:Math.max(0,Math.min(C-1,Math.round((lon-B.west)*C/(B.east-B.west)-.5-.5*(r&1))))};}
 const portNames=new Set(['Vancouver','Victoria','Prince Rupert','Seattle','Portland','San Francisco','Los Angeles','San Diego','Halifax',"St John's",'Boston','New York','Miami','New Orleans']);
 function create(_,__,seed){
@@ -181,5 +225,6 @@ const api=common.define({
  blurbs:{eu:'Atlantic occupation: major eastern urban and industrial centres, with Great Lakes access.',cf:'Pacific occupation: the western coast, western Canada and strong naval forces.',remnants:'Britannian heartland: 27 cities from the Prairies to Texas, veteran imperial officers, a substantial land army and a starting airship.'}
 });
 api.migrateSavedTerrain=migrateSavedTerrain;
+api.visualReliefTerrain=visualReliefTerrain;
 if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

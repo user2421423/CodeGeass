@@ -856,17 +856,21 @@ const GEOGRAPHY = (() => {
     return {tiles,rings,path};
   }
   let regionalReliefCache=null;
+  // Keep relief visible without painting distracting opaque biome rectangles.
+  // This shared treatment applies to every geographically rendered scenario.
   const REGIONAL_RELIEF={
-    forest:{fill:'rgba(36,79,51,.06)'},
-    desert:{fill:'rgba(235,198,126,.10)'},
-    mountain:{fill:'rgba(76,67,55,.11)'},
+    forest:{fill:'rgba(36,79,51,.045)'},
+    desert:{fill:'rgba(235,198,126,.070)'},
+    mountain:{fill:'rgba(76,67,55,.080)'},
   };
   function paintRegionalRelief(ctx,g,left,right,top,bottom) {
     const revision=g.mapTerrainRevision||0;
     if(regionalReliefCache?.tiles!==g.tiles||regionalReliefCache.revision!==revision){
       const groups={forest:[],desert:[],mountain:[]};
+      const visualTerrain=E.scenarios?.byId?.[g.scenario?.id]?.visualReliefTerrain;
       for(const t of g.tiles){
-        const kind=t.terrain==='peak'?'mountain':t.terrain;
+        const terrain=visualTerrain ? visualTerrain(t) : t.terrain;
+        const kind=terrain==='peak'?'mountain':terrain;
         if(groups[kind])groups[kind].push(t);
       }
       regionalReliefCache={tiles:g.tiles,revision,layers:Object.entries(groups)
@@ -883,6 +887,10 @@ const GEOGRAPHY = (() => {
           return {kind,...coverage};
         })};
     }
+    ctx.save();
+    // Feather relief masks in the same world-space paint on every atlas chunk.
+    // The atlas overscan is sized to retain the blur across chunk edges.
+    if (typeof ctx.filter === 'string') ctx.filter='blur(12px)';
     for(const layer of regionalReliefCache.layers){
       const style=REGIONAL_RELIEF[layer.kind];
       ctx.fillStyle=style.fill;
@@ -894,6 +902,7 @@ const GEOGRAPHY = (() => {
         layer.path?ctx.stroke(layer.path):ctx.stroke();
       }
     }
+    ctx.restore();
   }
   const countryBoundaries = new WeakMap();
   function countryBoundary(g) {
