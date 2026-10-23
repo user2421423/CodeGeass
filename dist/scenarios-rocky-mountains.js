@@ -1739,16 +1739,8 @@ function paintRelief(ctx,g,{R,SQ,left,right,top,bottom}){
   const [x,y]=xy(point);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
  });ctx.closePath();}
  ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
- for(const [,poly,kind] of BASINS){
-  ctx.fillStyle=kind==='desert'?'rgba(207,171,110,0.35)':'rgba(153,176,126,0.18)';
-  path(poly);ctx.fill();
- }
- // Separate actual named mountain massifs, instead of uniform diagonal strips.
- for(const [,poly] of MASSIFS){
-  ctx.fillStyle='rgba(112,101,85,0.42)';path(poly);ctx.fill();
-  ctx.strokeStyle='rgba(221,208,176,0.28)';ctx.lineWidth=Math.max(.7,R*.11);
-  ctx.stroke();
- }
+ // Mountain and basin shading uses the shared cartographic terrain contours.
+ // Keep this scenario's authored lakes and rivers above that common relief.
  for(const [,poly] of LAKES){
   ctx.fillStyle='#245b75';path(poly);ctx.fill();
   ctx.strokeStyle='rgba(173,218,228,0.7)';ctx.lineWidth=Math.max(.8,R*.1);

@@ -184,7 +184,7 @@ let geographyLoad = null;
 function ensureGeography() {
   return geographyLoad ||= (async () => {
     await Promise.all(['ui/geography-data.js', 'ui/japan-coastlines.js'].map(loadGameScript));
-    await loadGameScript('ui/geography.js?v=20261023-bering-ocean');
+    await loadGameScript('ui/geography.js?v=20261023-cartography');
     if (typeof GEOGRAPHY === 'undefined') throw new Error('Map geography did not initialize.');
   })().catch(error => { geographyLoad = null; throw error; });
 }

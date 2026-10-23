@@ -79,10 +79,7 @@ const GEOGRAPHY = (() => {
     const item = { points: projected, displayPoints, bounds: bbox(projected) };
     if (FAST_PATH && displayPoints.length > 2) {
       const path = new Path2D();
-      path.moveTo(displayPoints[0][0], displayPoints[0][1]);
-      for (let i = 1; i < displayPoints.length; i++)
-        path.lineTo(displayPoints[i][0], displayPoints[i][1]);
-      path.closePath();
+      roundedRing(path,displayPoints,R*.012);
       item.path = path;
     }
     return item;
@@ -106,9 +103,7 @@ const GEOGRAPHY = (() => {
   }
   function polygon(ctx, points) {
     if (points.length < 3) return;
-    ctx.moveTo(points[0][0], points[0][1]);
-    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
-    ctx.closePath();
+    roundedRing(ctx,points,R*.012);
   }
   function paths(ctx, shapes, left, right, top, bottom) {
     const compiled = FAST_PATH && typeof Path2D.prototype.addPath === 'function';
@@ -125,9 +120,7 @@ const GEOGRAPHY = (() => {
           // writing them into ctx made the overview land disappear.
           const pts = s.displayPoints || s.points;
           if (pts.length < 3) continue;
-          combined.moveTo(pts[0][0], pts[0][1]);
-          for (let i = 1; i < pts.length; i++) combined.lineTo(pts[i][0], pts[i][1]);
-          combined.closePath();
+          roundedRing(combined,pts,R*.012);
         }
       } else polygon(ctx, s.displayPoints || s.points);
       count++;
@@ -500,13 +493,21 @@ const GEOGRAPHY = (() => {
     if (p.coastOutline !== undefined) return p.coastOutline;
     const pts = p.displayPoints || p.points, n = pts.length;
     const outline = FAST_PATH ? new Path2D() : [];
+    const corners=pts.map((b,i)=>{
+      const a=pts[(i+n-1)%n],c=pts[(i+1)%n];
+      const la=Math.hypot(a[0]-b[0],a[1]-b[1]),lc=Math.hypot(c[0]-b[0],c[1]-b[1]);
+      const d=visibleCoastEdge(a,b)&&visibleCoastEdge(b,c)?Math.min(R*.012,la*.2,lc*.2):0;
+      return {entry:[b[0]+(a[0]-b[0])*d/(la||1),b[1]+(a[1]-b[1])*d/(la||1)],
+        exit:[b[0]+(c[0]-b[0])*d/(lc||1),b[1]+(c[1]-b[1])*d/(lc||1)]};
+    });
     for (let i = 0; i < n; i++) {
       const a = pts[i], b = pts[(i + 1) % n];
       if (!visibleCoastEdge(a, b)) continue;
+      const start=corners[i].exit,end=corners[(i+1)%n];
       if (FAST_PATH) {
-        outline.moveTo(a[0], a[1]);
-        outline.lineTo(b[0], b[1]);
-      } else outline.push([a, b]);
+        outline.moveTo(...start);outline.lineTo(...end.entry);
+        outline.quadraticCurveTo(...b,...end.exit);
+      } else outline.push([start,end.entry,b,end.exit]);
     }
     p.coastOutline = outline;
     return outline;
@@ -525,9 +526,10 @@ const GEOGRAPHY = (() => {
       const outline = coastOutline(p);
       if (batched) batched.addPath(outline);
       else if (FAST_PATH) ctx.stroke(outline);
-      else for (const [a, b] of outline) {
+      else for (const [a, b, control, end] of outline) {
         ctx.moveTo(a[0], a[1]);
         ctx.lineTo(b[0], b[1]);
+        ctx.quadraticCurveTo(...control,...end);
       }
     }
     if (batched) ctx.stroke(batched);
@@ -771,6 +773,136 @@ const GEOGRAPHY = (() => {
     return (g?.mode === 'scenario' && E.scenarios?.byId?.[g.scenario?.id]?.meta?.map) || {};
   }
   const hasOverlay = (g, name) => !!mapMeta(g).overlays?.includes(name);
+  // Shared cartographic contours. Trace the outside of connected hex terrain,
+  // then round only its corners; never shade approximate circles or ridge bands.
+  // These paths are artwork only and do not change a single tactical hex.
+  function coverageRings(tiles) {
+    const edges=new Map(), vertex=(x,y)=>Math.round(x*1000)+','+Math.round(y*1000);
+    for(const t of tiles){
+      const x=SQ*R*(t.c+.5*(t.r&1))+R,y=1.5*R*t.r+R;
+      const points=Array.from({length:6},(_,i)=>{
+        const a=(60*i-30)*Math.PI/180;
+        const p=[x+R*Math.cos(a),y+R*Math.sin(a)];
+        return {p,key:vertex(...p)};
+      });
+      for(let i=0;i<6;i++){
+        const a=points[i],b=points[(i+1)%6],reverse=b.key+'>'+a.key;
+        if(edges.has(reverse))edges.delete(reverse);
+        else edges.set(a.key+'>'+b.key,{a,b});
+      }
+    }
+    const starts=new Map();
+    for(const [key,edge] of edges){
+      if(!starts.has(edge.a.key))starts.set(edge.a.key,[]);
+      starts.get(edge.a.key).push(key);
+    }
+    const rings=[];
+    for(const [key,first] of edges){
+      const ring=[first.a.p];let next=key;
+      while(next&&edges.has(next)){
+        const e=edges.get(next);edges.delete(next);
+        if(e.b.key===first.a.key)break;
+        ring.push(e.b.p);
+        next=starts.get(e.b.key)?.find(k=>edges.has(k));
+      }
+      if(ring.length>=3)rings.push(ring);
+    }
+    return rings;
+  }
+  function roundedRing(target,points,limit=R*.18) {
+    if(points.length<3)return;
+    const corners=points.map((p,i)=>{
+      const a=points[(i+points.length-1)%points.length],b=points[(i+1)%points.length];
+      const la=Math.hypot(a[0]-p[0],a[1]-p[1]),lb=Math.hypot(b[0]-p[0],b[1]-p[1]);
+      const fraction=limit>R*.1?.42:.2;
+      const d=Math.min(limit,la*fraction,lb*fraction);
+      return {p,entry:[p[0]+(a[0]-p[0])*d/(la||1),p[1]+(a[1]-p[1])*d/(la||1)],
+        exit:[p[0]+(b[0]-p[0])*d/(lb||1),p[1]+(b[1]-p[1])*d/(lb||1)]};
+    });
+    target.moveTo(...corners[0].exit);
+    for(let i=1;i<=corners.length;i++){
+      const c=corners[i%corners.length];target.lineTo(...c.entry);
+      target.quadraticCurveTo(...c.p,...c.exit);
+    }
+    target.closePath();
+  }
+  function simplifyContour(ring) {
+    // Suppress the one-hex staircase while keeping displacement below half a
+    // hex. Split the closed ring before RDP so its closing edge is preserved.
+    function simplify(points){
+      if(points.length<3)return points;
+      const a=points[0],b=points[points.length-1],dx=b[0]-a[0],dy=b[1]-a[1];
+      let best=R*R*.25,index=-1;
+      for(let i=1;i<points.length-1;i++){
+        const p=points[i],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1)));
+        const d=(p[0]-a[0]-t*dx)**2+(p[1]-a[1]-t*dy)**2;
+        if(d>best){best=d;index=i;}
+      }
+      if(index<0)return [a,b];
+      return [...simplify(points.slice(0,index+1)).slice(0,-1),...simplify(points.slice(index))];
+    }
+    let split=1,best=0;
+    for(let i=1;i<ring.length;i++){
+      const d=(ring[i][0]-ring[0][0])**2+(ring[i][1]-ring[0][1])**2;
+      if(d>best){best=d;split=i;}
+    }
+    const result=[...simplify(ring.slice(0,split+1)).slice(0,-1),
+      ...simplify([...ring.slice(split),ring[0]]).slice(0,-1)];
+    return result.length>=3?result:ring;
+  }
+  function contourCoverage(tiles) {
+    const rings=coverageRings(tiles).map(simplifyContour),path=FAST_PATH?new Path2D():null;
+    if(path)for(const ring of rings)roundedRing(path,ring,R*.85);
+    return {tiles,rings,path};
+  }
+  let regionalReliefCache=null;
+  const REGIONAL_RELIEF={
+    forest:{fill:'rgba(36,79,51,.06)'},
+    desert:{fill:'rgba(235,198,126,.10)'},
+    mountain:{fill:'rgba(76,67,55,.11)'},
+  };
+  function paintRegionalRelief(ctx,g,left,right,top,bottom) {
+    const revision=g.mapTerrainRevision||0;
+    if(regionalReliefCache?.tiles!==g.tiles||regionalReliefCache.revision!==revision){
+      const groups={forest:[],desert:[],mountain:[]};
+      for(const t of g.tiles){
+        const kind=t.terrain==='peak'?'mountain':t.terrain;
+        if(groups[kind])groups[kind].push(t);
+      }
+      regionalReliefCache={tiles:g.tiles,revision,layers:Object.entries(groups)
+        .filter(([,tiles])=>tiles.length>1)
+        .map(([kind,tiles])=>{
+          const coverage=contourCoverage(tiles);
+          coverage.rings=coverage.rings.filter(ring=>{
+            const area=ring.reduce((n,p,i)=>{const q=ring[(i+1)%ring.length];
+              return n+p[0]*q[1]-q[0]*p[1];},0)/2;
+            return Math.abs(area)>R*R*8;
+          });
+          if(coverage.path){coverage.path=new Path2D();
+            for(const ring of coverage.rings)roundedRing(coverage.path,ring,R*.85);}
+          return {kind,...coverage};
+        })};
+    }
+    for(const layer of regionalReliefCache.layers){
+      const style=REGIONAL_RELIEF[layer.kind];
+      ctx.fillStyle=style.fill;
+      if(!layer.path){ctx.beginPath();for(const ring of layer.rings)roundedRing(ctx,ring,R*.85);}
+      layer.path?ctx.fill(layer.path):ctx.fill();
+      if(style.edge){
+        ctx.strokeStyle=style.edge;ctx.lineWidth=R*.085;
+        ctx.lineJoin='round';ctx.lineCap='round';
+        layer.path?ctx.stroke(layer.path):ctx.stroke();
+      }
+    }
+  }
+  const countryBoundaries = new WeakMap();
+  function countryBoundary(g) {
+    const model=E.scenarios?.byId?.[g.scenario?.id];
+    if(!mapMeta(g).countryBoundary || !model?.landPolygons)return null;
+    if(!countryBoundaries.has(model))
+      countryBoundaries.set(model,model.landPolygons.map(shape));
+    return countryBoundaries.get(model);
+  }
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
     return !!mapMeta(g).europeanRegion;
@@ -846,9 +978,7 @@ const GEOGRAPHY = (() => {
     for (const group of cache.groups.values()) for (const t of group) add(t);
     // Unowned playable land remains visible; offmap countries are outside the theatre.
     for (const t of g.tiles) if (t.terrain !== 'sea' && t.terrain !== 'offmap') add(t);
-    const path = FAST_PATH ? new Path2D() : null;
-    if (path) for (const t of tiles) tacticalHex(path, t, R + .8);
-    cache.visibleLand = { path, tiles };
+    cache.visibleLand = contourCoverage(tiles);
     return localCoverage(cache.visibleLand, left, right, top, bottom);
   }
   // Rasterizing the entire theatre's 10,000-hex clipping stencil in every
@@ -856,6 +986,9 @@ const GEOGRAPHY = (() => {
   // Cull only shapes wholly outside this paint rectangle. Every intersecting
   // hex keeps its exact original vertices and winding.
   function localCoverage(coverage, left, right, top, bottom) {
+    // The outside contours contain far fewer edges than thousands of filled
+    // hexes. Keep the same path in every chunk so rounded crop edges never seam.
+    if(coverage.rings)return coverage;
     if (!Number.isFinite(left) || !FAST_PATH || right-left > 2048 || bottom-top > 2048) return coverage;
     const tiles = coverage.tiles.filter(t => {
       const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
@@ -869,7 +1002,8 @@ const GEOGRAPHY = (() => {
   function clipRegionalLand(ctx, coverage) {
     if (coverage.path) return ctx.clip(coverage.path);
     ctx.beginPath();
-    for (const t of coverage.tiles) tacticalHex(ctx, t, R + .8);
+    if(coverage.rings)for(const ring of coverage.rings)roundedRing(ctx,ring,R*.85);
+    else for (const t of coverage.tiles) tacticalHex(ctx, t, R + .8);
     ctx.clip();
   }
   // The Bering map crosses the international date line (148° E to 132° W).
@@ -969,7 +1103,7 @@ const GEOGRAPHY = (() => {
     const outline = FAST_PATH ? new Path2D() : null;
     const outlineSegments = [];
     for (const s of shapes) {
-      const pts = s.points;
+      const pts = s.displayPoints || s.points;
       for (let i = 0; i < pts.length; i++) {
         const a = pts[i], b = pts[(i + 1) % pts.length];
         if (Math.abs(a[0] - seamX) < 0.01 && Math.abs(b[0] - seamX) < 0.01) continue;
@@ -1208,6 +1342,16 @@ const GEOGRAPHY = (() => {
       (europeOnly || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
+    const country = countryBoundary(g);
+    // A country-only theatre needs the exact political boundary as well as
+    // the physical coastline. Tactical hex clipping alone leaves a sawtooth
+    // inland edge and can expose neighbouring countries on the same continent.
+    const countryClip = () => {
+      if(!country)return;
+      const outline=paths(ctx,country,a,b,c,d);
+      if(outline)clipPath(ctx,outline);
+      else {ctx.beginPath();ctx.rect(0,0,0,0);ctx.clip();}
+    };
 
     // Shared world-space endpoints, identical for every atlas chunk.
     // Chunk-local gradients produce rectangular seams while zooming/panning.
@@ -1229,10 +1373,12 @@ const GEOGRAPHY = (() => {
     // remains valid across ordinary city captures and is cached separately.
     ctx.save();
     ctx.transform(A, C, B, D, tx, ty);
+    countryClip();
     const clip = paths(ctx, shapes, a, b, c, d);
     if (clip) {
       clipPath(ctx, clip);
       ctx.transform(invA, invC, invB, invD, invX, invY);
+      clipRegionalLand(ctx,visibleLand);
       if (layer !== 'political') {
         ctx.fillStyle = '#91a799';
         if (layer === 'static') {
@@ -1279,11 +1425,21 @@ const GEOGRAPHY = (() => {
     ctx.restore();
     // No terrain, sea fill, coastlines or relief work on a capture-only repaint.
     if (layer === 'political') return true;
-    // Regional mountain, forest and valley coordinates still determine tactical
-    // terrain and movement. Do not paint their approximate influence zones as
-    // overlapping semi-transparent ellipses: at strategic zoom they become
-    // muddy circular patches over the owning faction's colour. Mountain and
-    // forest HEX terrain icons are already drawn by the tactical renderer.
+    // Scenario overlays obey the same exact country crop as its land fill.
+    ctx.save();
+    if(country){
+      ctx.transform(A,C,B,D,tx,ty);countryClip();
+      ctx.transform(invA,invC,invB,invD,invX,invY);
+    }
+    // Every regional map uses the same understated terrain contours. Clip
+    // shading to real geographic land, independent of ownership and chunk size.
+    ctx.save();clipRegionalLand(ctx,visibleLand);
+    ctx.transform(A,C,B,D,tx,ty);
+    const reliefLand=paths(ctx,shapes,a,b,c,d);
+    if(reliefLand)clipPath(ctx,reliefLand);
+    ctx.transform(invA,invC,invB,invD,invX,invY);
+    paintRegionalRelief(ctx,g,left,right,top,bottom);
+    ctx.restore();
     // Greenland's ice cap lies above the national coastal tint. Render it as
     // snowy relief while retaining the actual GSHHG silhouette under all hexes.
     if (has('greenland')) {
@@ -1308,8 +1464,18 @@ const GEOGRAPHY = (() => {
       ctx.save();
       clipRegionalLand(ctx, visibleLand);
       ctx.transform(A, C, B, D, tx, ty);
+      countryClip();
       coast(ctx, shapes, a, b, c, d,
         Math.max(0.5, scale * Math.hypot(A, C)));
+      ctx.restore();
+    }
+    if(country){
+      ctx.save();clipRegionalLand(ctx,visibleLand);
+      ctx.transform(A,C,B,D,tx,ty);
+      ctx.strokeStyle='rgba(226,233,216,0.50)';
+      ctx.lineWidth=.9/Math.max(.5,scale*Math.hypot(A,C));
+      const outline=paths(ctx,country,a,b,c,d);
+      if(outline)outline===true?ctx.stroke():ctx.stroke(outline);
       ctx.restore();
     }
     // Palau and Yap are intentionally enlarged in the *gameplay* mask to
@@ -1507,18 +1673,7 @@ ctx.restore();}
       };
       ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
       ctx.lineJoin='round';ctx.lineCap='round';
-      for(const [lon,lat,width,height] of atlas.basins||[]){
-        const [x,y]=xy([lon,lat]);ctx.beginPath();ctx.ellipse(x,y,
-          Math.abs(width*sx*.5),Math.abs(height*sy*.5),0,0,Math.PI*2);
-        ctx.fillStyle='rgba(209,190,140,.29)';ctx.fill();
-      }
-      for(const ridge of Object.values(atlas.ridges||{})){
-        if(!ridge?.points?.length)continue;
-        line(ridge.points);ctx.strokeStyle='rgba(103,93,77,.33)';
-        ctx.lineWidth=Math.max(2,Math.abs(ridge.width*sx)*1.35);ctx.stroke();
-        line(ridge.points);ctx.strokeStyle='rgba(218,202,169,.32)';
-        ctx.lineWidth=Math.max(1,Math.abs(ridge.width*sx)*.22);ctx.stroke();
-      }
+      // Basin and ridge bands are replaced by the shared terrain contours.
       for(const pass of Object.values(atlas.passes||{})){
         if(!pass?.points?.length)continue;
         line(pass.points);ctx.strokeStyle='rgba(229,213,155,.55)';
@@ -1559,6 +1714,7 @@ ctx.restore();}
       }
       ctx.restore();
     }
+    ctx.restore();
     return true;
   }
   function paint(ctx, g, left, right, top, bottom, scale, layer = 'all') {
@@ -1640,6 +1796,7 @@ ctx.restore();}
     return t && t.terrain !== 'sea' && t.terrain !== 'offmap' ? 1 : 0;
   }
   function releaseMap() {
+    regionalReliefCache=null;
     ownershipCache = islandOwnerCache = japanColorCache = null;
     beringPaintCache = {tiles:null,revision:-1,paths:null};
     beringGeographicOwnersCache = {tiles:null,revision:-1,paths:null,groups:null};

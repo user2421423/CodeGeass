@@ -554,7 +554,8 @@
     staging:STAGING,defense:DEFENDERS,invasions:INVASIONS,
     lakes:LAKES,rivers:RIVERS,volcanoes:VOLCANOES,mountainPasses:PASSES,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={terrainCosts:{mountain:2},elite:true,expeditionSide:'cf',
+  api.meta={map:{centreSampled:true,overlays:['lakes','regionalRivers']},
+    terrainCosts:{mountain:2},elite:true,expeditionSide:'cf',
     text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Central America · Federation World Campaign",
       intro:"The Federation advances north from Panama through Costa Rica to Guatemala, supported by Pacific fleets. Capture all 81 cities.",

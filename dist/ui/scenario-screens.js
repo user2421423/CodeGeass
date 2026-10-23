@@ -253,7 +253,7 @@ function scenarioDialog() {
             <div class="scenario-map-side">
               <div class="scenario-map-head"><span>${chinaMainland?'MAINLAND CHINA · NATIONAL THEATRE':'OPERATIONAL MAP'}</span><span>${model.cols} × ${model.rows} HEXES</span></div>
               <div class="scenario-map-window">
-                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" data-fallback-preview="${chinaMainland?'svg':''}" alt="${chinaMainland?'Mainland China, including UFN and Federation starting territory':'Geographic map of '+esc(model.title)+' with no troops or unit markers'}" src="scenario-previews/${esc(scenarioKind)}.webp${scenarioKind === 'cf-eu-central-europe' ? '?v=20261022-offmap' : ''}">${chinaOpeningLegend}<p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
+                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" data-fallback-preview="${chinaMainland?'svg':''}" alt="${chinaMainland?'Mainland China, including UFN and Federation starting territory':'Geographic map of '+esc(model.title)+' with no troops or unit markers'}" src="scenario-previews/${esc(scenarioKind)}.webp?v=20261023-cartography">${chinaOpeningLegend}<p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
               </div>
               <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount===null?'Static geographic preview':unitCount+' starting formations'}</span><span>${sideCount} playable powers</span></div>
             </div>
