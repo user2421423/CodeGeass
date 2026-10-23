@@ -552,7 +552,7 @@
   function smilasDealCombatDamage(g, victim, attacker, amount, allowJohanne=true) {
     // Scripted volleys, support strikes and splash cannot bypass the same
     // barrier that prevents ordinary ranged targeting.
-    if(rangedImmuneTo(g,victim,attacker))return 0;
+    if(rangedImmuneTo(g,victim,attacker)||mindReadBlocksAttack(g,victim,attacker))return 0;
     const guard=allowJohanne?johanneBodyguard(g,victim,attacker):null;
     if(guard){johanneAbsorb(g,victim,attacker,guard,amount);return 0;}
     const incoming = darltonProtect(g,victim,attacker,guilfordProtect(g,victim,attacker,amount));

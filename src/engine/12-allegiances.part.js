@@ -254,6 +254,8 @@
     const out = [];
     if (u.skillMarks?.length) out.push('Designated target');
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
+    if(u.expMaoMovePending||u.expMaoMoveActive)out.push('Mao — Psychological Pressure: next turn movement −2');
+    if(fx(u).mindReadAdjacent)out.push('Absolute Mind Reading: adjacent enemies cannot attack this formation');
     if(u.expZeroGeass)out.push('Geass Absolute Command: counterattacks suppressed');
     if(u.expGuilfordRetribution?.targets?.length)out.push("Spearhead's Retribution: +30% against attackers of guarded commanders");
 

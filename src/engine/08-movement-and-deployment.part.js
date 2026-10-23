@@ -79,6 +79,8 @@
     if (u.expKallenSlowActive) n = Math.max(1, n - 2);
     if (u.expArkFleetSlow) n = Math.max(1, n - (u.expArkFleetSlow.penalty || 2));
     if(u.expMiguelSupply)n=Math.max(0,n-2);
+    // Mao's mind-reading pulse lasts through the commander's next activation.
+    if(u.expMaoMoveActive)n=Math.max(1,n-2);
     return n;
   }
   function terrainStepCost(g, t) {
@@ -252,10 +254,16 @@
     return !!(target && target.hp > 0 && source &&
       fx(target).rangedImmunity && dist(g, target, source) > 1);
   }
+  function mindReadBlocksAttack(g,target,attacker) {
+    return !!(target && target.hp>0 && attacker && attacker.hp>0 &&
+      fx(target).mindReadAdjacent && foe(g,target.side,attacker.side) &&
+      dist(g,target,attacker)===1);
+  }
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
     if (target) return foe(g, target.side, u.side) &&
+      !mindReadBlocksAttack(g,target,u) &&
       !rangedImmuneTo(g, target, u) &&
       (!isAir(target) || canHitAir(u));
     return !!st && foe(g, st.owner, u.side) && st.shield > 0;

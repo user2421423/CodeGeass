@@ -113,6 +113,8 @@
         delete v.expOscarReposition;
         // Suppression remains for the target's full action phase.
         delete v.expMiguelSupply;
+        // Mao's movement debuff expires after this faction's completed turn.
+        delete v.expMaoMoveActive;
         delete v.expToruExtraAttack;delete v.expToruExtraMove;
         delete v.expFarneseExtraMove;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
@@ -188,6 +190,22 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
+    // Mao reads the intentions of every enemy commander within two hexes.
+    // Each target takes one morale hit and one non-stacking movement penalty
+    // per Mao faction turn. Moving out of range does not remove that penalty.
+    const maos=mine.filter(u=>u.cmd==='mao'&&!atSea(g,u));
+    if(maos.length){
+      let affected=0;
+      for(const enemy of g.units){
+        if(enemy.hp<=0||!enemy.cmd||atSea(g,enemy)||!foe(g,enemy.side,side)||
+           !maos.some(mao=>dist(g,mao,enemy)<=2))continue;
+        lowerMorale(g,enemy,1);
+        enemy.expMaoMovePending=true;
+        affected++;
+      }
+      if(affected)log(g,'Psychological Pressure: '+affected+
+        ' enemy commanders lose morale and 2 movement next turn.',side);
+    }
     // Information Warfare is a friendly-turn pulse, not a continuous aura.
     for(const julius of mine.filter(v=>v.cmd==='julius'&&!atSea(g,v))){
       if(julius.arkFleetAirshipCD==null)julius.arkFleetAirshipCD=10;
@@ -257,6 +275,9 @@
       u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
       u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
       u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
+      // Activate Mao's -2 movement before pathfinding/AI for this faction.
+      u.expMaoMoveActive=!!u.expMaoMovePending;
+      delete u.expMaoMovePending;
       u.expYukiyaElectronicActive = !!u.expYukiyaElectronicNext;
       delete u.expYukiyaElectronicNext;
       if(u.expZiWeakenNext){u.despairWeakened={side:u.side,source:'zi',value:u.expZiWeakenNext};delete u.expZiWeakenNext;}
