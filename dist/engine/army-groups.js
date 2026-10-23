@@ -3,10 +3,10 @@
    Source of truth: this standalone extension; loaded after engine.js. */
 (function (E) {
   'use strict';
-  const MAX_GROUPS = 12;
-  // Preferred size for automatic scenario organization, not a membership cap.
+  const MAX_GROUPS = 40;
+  // Preferred size for automatic organization in every mode, not a membership cap.
   const AUTO_GROUP_PREFERRED_SIZE = 24;
-  const groupLimit = g => g.mode === 'scenario' ? 40 : MAX_GROUPS;
+  const groupLimit = () => MAX_GROUPS;
 
   // Legacy saves used Defend; upgrade it to passive Hold Position on first access.
   const groups = g => {
@@ -515,16 +515,16 @@
     return report;
   }
   E.suspendArmyGroupConquestUnit = suspendConquestUnit;
-  // Opt-in organization of the existing roster. No units, positions, actions,
+  // Opt-in organization of the existing roster in scenarios and both Conquests. No units, positions, actions,
   // objectives or resources change; existing player groups remain authoritative.
   function organizeScenario(g) {
     const why=canEdit(g);
-    if(why || g.mode!=='scenario')return {ok:false,reason:why || 'Regional scenarios only'};
+    if (why) return {ok:false,reason:why};
     prune(g);
     const assigned=new Set(groups(g).flatMap(gr=>gr.units));
     const positions=new Map(),sources=new Map();
     for(const u of g.units)for(const v of u.cargo || [])positions.set(v.id,u);
-    for(const source of g.scenario.groups || [])if(source.side===g.player)
+    for(const source of g.scenario?.groups || [])if(source.side===g.player)
       for(const id of source.units)sources.set(id,source);
     const pending=E.allUnits(g).filter(u=>u.hp>0 && u.side===g.player && !assigned.has(u.id));
     let created=0,added=0;
@@ -567,6 +567,7 @@
     return {ok:true,changed};
   }
   E.armyGroupLimit = groupLimit;
+  E.organizeArmies = organizeScenario;
   E.organizeScenarioArmies = organizeScenario;
   E.bulkArmyGroupOrder = bulkOrder;
   E.setArmyGroupConquest = setConquest;
