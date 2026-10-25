@@ -1,19 +1,35 @@
 /* Invasion of Brazil — Europia's six transatlantic amphibious fronts.
-   176x144 WGS84 hexes, GSHHS intermediate shoreline by polygon land share.
+   Cropped Brazil-only WGS84 hexes, GSHHS intermediate shoreline by polygon land share.
    20%-80% mixed-coast rule; no EU starting cities or turn limit. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
-  const COLS=176,ROWS=144,SIDES=['eu','britannia'];
-  const BOUNDS={west:-81,east:-31,north:9,south:-36};
-  const K=Math.cos(13.5*Math.PI/180);
-  const PROJECTION={centerLon:-56,centerLat:-13.5,angle:0,uMin:-25*K,uMax:25*K,vMin:-22.5,vMax:22.5};
+  // The shoreline and country mask were generated on the original 176x144
+  // lattice. Crop empty border cells instead of resampling that coastline:
+  // gameplay hex size, city positions, sea lanes and adjacent tiles stay aligned.
+  const SOURCE_COLS=176,SOURCE_ROWS=144,CROP_WEST=20,CROP_NORTH=8;
+  const COLS=SOURCE_COLS-CROP_WEST-2,ROWS=SOURCE_ROWS-CROP_NORTH-2;
+  const SIDES=['eu','britannia'];
+  const SOURCE_BOUNDS={west:-81,east:-31,north:9,south:-36};
+  const LON_STEP=(SOURCE_BOUNDS.east-SOURCE_BOUNDS.west)/SOURCE_COLS;
+  const LAT_STEP=(SOURCE_BOUNDS.north-SOURCE_BOUNDS.south)/SOURCE_ROWS;
+  const BOUNDS={west:SOURCE_BOUNDS.west+CROP_WEST*LON_STEP,
+    east:SOURCE_BOUNDS.west+(CROP_WEST+COLS)*LON_STEP,
+    north:SOURCE_BOUNDS.north-CROP_NORTH*LAT_STEP,
+    south:SOURCE_BOUNDS.north-(CROP_NORTH+ROWS)*LAT_STEP};
+  const CENTER_LON=(BOUNDS.west+BOUNDS.east)/2,CENTER_LAT=(BOUNDS.north+BOUNDS.south)/2;
+  const K=Math.cos(Math.abs(CENTER_LAT)*Math.PI/180);
+  const PROJECTION={centerLon:CENTER_LON,centerLat:CENTER_LAT,angle:0,
+    uMin:-(BOUNDS.east-BOUNDS.west)*K/2,uMax:(BOUNDS.east-BOUNDS.west)*K/2,
+    vMin:-(BOUNDS.north-BOUNDS.south)/2,vMax:(BOUNDS.north-BOUNDS.south)/2};
   // Row transitions: [column, class, ...], class 0 sea, 1 mixed, 2 land.
   const COAST_ROWS=`0,1,1,2,4,1,5,0,7,1,8,2,11,1,12,0,16,2,71,0;0,2,3,1,4,0,8,1,9,2,12,1,13,0,14,2,65,1,67,2,68,1,70,2,71,1,72,2,73,1,74,0;0,2,2,0,9,1,10,2,14,1,15,2,75,1,76,0;0,2,2,0,8,1,9,2,14,1,15,2,57,1,58,2,77,0;0,2,3,1,4,0,10,2,63,1,64,2,78,1,79,0;0,1,2,0,10,1,11,2,49,1,50,2,63,1,64,2,78,1,79,0;0,0,11,1,12,2,63,1,64,2,79,1,80,0;0,0,12,1,13,2,48,1,49,2,78,1,79,2,81,0;0,0,13,2,82,1,83,0;0,0,12,1,13,2,83,1,86,0,88,1,93,0;0,0,13,2,95,1,97,0;0,0,12,2,97,1,99,0;0,0,12,1,13,2,100,1,101,0;0,0,12,1,13,2,90,1,92,2,101,0;0,0,13,2,102,1,103,0;0,0,12,2,104,1,105,0;0,0,13,1,14,2,105,0;0,0,12,1,13,2,105,0;0,0,12,1,13,2,105,1,106,0;0,0,11,2,105,0;0,0,9,1,11,2,106,0;0,0,8,2,106,0;0,0,8,1,9,2,107,1,108,0;0,0,6,1,7,2,109,0;0,0,7,1,8,2,109,1,110,0;0,0,4,1,6,2,108,1,109,0;0,0,3,1,4,2,107,1,109,0;0,0,3,2,106,1,110,0;0,0,3,1,4,2,105,1,111,0;0,0,1,1,2,2,59,1,60,2,104,1,107,2,108,1,114,0;0,0,2,2,56,1,58,2,61,1,62,2,103,1,107,2,114,1,115,0;0,0,1,2,63,1,64,2,102,1,103,2,104,1,106,2,114,0,115,2,119,1,121,0;0,1,1,2,64,1,67,2,102,1,103,2,104,1,105,2,106,1,107,2,113,1,115,2,123,1,124,0;0,1,1,2,66,1,67,2,86,1,87,2,100,1,102,2,112,1,114,2,124,1,127,0;0,0,1,2,68,1,69,2,96,1,99,2,101,1,102,2,104,1,113,2,127,1,128,0;0,1,1,2,87,1,93,2,94,1,95,2,100,1,101,2,103,1,104,2,105,1,106,2,110,1,111,2,128,0;0,1,2,2,3,1,4,2,50,1,51,2,54,1,55,2,70,1,71,2,83,1,84,2,86,1,87,2,91,1,95,2,101,1,102,2,128,1,130,0,132,1,134,0;0,0,2,1,4,2,54,1,55,2,70,1,72,2,90,1,91,2,101,1,102,2,109,1,110,2,127,1,130,2,134,1,138,0;0,0,4,2,72,1,74,2,110,1,111,2,128,1,129,2,145,1,146,0;0,0,2,1,3,2,28,1,29,2,56,1,58,2,70,1,71,2,72,1,73,2,77,1,79,2,109,1,110,2,146,1,147,0;0,0,1,1,2,2,40,1,41,2,62,1,63,2,149,1,150,0;0,2,36,1,38,2,61,1,62,2,63,1,64,2,150,0;0,2,142,1,143,2,151,1,152,0;0,2,152,1,153,0;0,2,154,1,155,0;0,2,159,1,160,0;0,1,1,2,161,0;0,2,161,0;0,1,1,2,147,1,148,2,161,1,162,0;0,0,1,1,2,2,161,1,162,0;0,0,3,1,4,2,162,0;0,0,4,2,162,0;0,0,5,2,162,1,163,0;0,0,5,2,162,0;0,0,6,1,7,2,162,1,163,0;0,0,7,2,161,1,162,0;0,0,8,2,161,1,162,0;0,0,8,2,160,1,161,0;0,0,9,2,160,1,161,0;0,0,9,2,159,0;0,0,10,2,158,1,159,0;0,0,9,1,10,2,157,1,158,0;0,0,11,2,156,1,157,0;0,0,11,2,154,1,155,0;0,0,12,2,154,1,155,0;0,0,12,1,13,2,153,0;0,0,13,1,14,2,153,0;0,0,13,1,14,2,152,0;0,0,15,2,151,1,152,0;0,0,15,2,148,1,149,2,150,1,151,0;0,0,16,2,52,1,53,2,54,1,55,2,148,1,150,0;0,0,16,1,17,2,147,1,148,0;0,0,17,2,49,1,50,2,148,0;0,0,16,2,147,1,148,0;0,0,17,2,148,0;0,0,17,1,18,2,147,0;0,0,19,1,20,2,148,0;0,0,19,1,20,2,147,1,148,0;0,0,21,1,22,2,39,0,41,2,148,0;0,0,22,1,24,2,38,1,39,0,41,1,42,2,147,1,148,0;0,0,25,1,26,2,40,1,41,0,42,1,44,2,148,0;0,0,27,1,28,2,41,1,43,2,147,0;0,0,30,1,31,2,147,1,148,0;0,0,31,1,32,2,146,1,147,0;0,0,33,1,34,2,147,0;0,0,33,1,34,2,146,1,147,0;0,0,35,1,36,2,146,0;0,0,36,1,37,2,125,1,126,2,145,0;0,0,37,1,38,2,48,1,49,2,125,1,126,2,145,0;0,0,37,2,48,1,49,2,125,1,126,2,144,1,145,0;0,0,38,2,145,0;0,0,37,1,38,2,144,1,145,0;0,0,38,2,144,0;0,0,37,1,38,2,143,0;0,0,38,2,143,0;0,0,37,1,38,2,122,1,123,2,141,1,142,0;0,0,38,1,39,2,123,1,124,2,141,0;0,0,38,2,140,0;0,0,38,2,141,0;0,0,37,1,38,2,139,1,140,0;0,0,38,2,138,0;0,0,37,2,132,1,133,2,137,0;0,0,37,1,38,2,128,1,130,0,131,1,133,0,134,1,135,0;0,0,36,2,111,1,113,2,126,1,128,0;0,0,37,2,125,1,126,0;0,0,36,1,37,2,121,1,122,0;0,0,37,2,120,0;0,0,36,2,118,1,119,0;0,0,37,2,116,1,117,0;0,0,36,1,37,2,115,1,116,0;0,0,36,1,37,2,114,1,115,0;0,0,36,2,113,1,114,0;0,0,36,1,37,2,114,0;0,0,36,2,113,1,114,0;0,0,36,2,114,0;0,0,35,2,113,1,114,0;0,0,35,1,36,2,82,1,88,2,114,1,115,0;0,0,34,1,35,2,77,1,78,2,113,1,114,0;0,0,34,1,35,2,77,1,78,2,114,0;0,0,34,2,76,1,77,2,83,1,84,2,113,0;0,0,34,2,112,1,113,0;0,0,33,2,110,1,111,0;0,0,33,1,34,2,75,1,76,2,110,1,111,0;0,0,33,1,34,2,74,1,75,2,108,1,109,0;0,0,34,2,75,1,76,2,109,0;0,0,33,2,74,1,75,2,104,1,105,2,106,1,107,2,108,0;0,0,33,2,64,1,66,2,75,1,76,2,104,1,105,0,106,1,107,2,108,0;0,0,32,1,33,2,63,1,66,2,103,1,104,0,105,1,107,0;0,0,33,2,103,1,104,0,105,2,106,1,107,0;0,0,32,1,33,2,101,1,102,0,104,1,105,0;0,0,33,1,34,2,71,1,72,2,101,1,104,0;0,0,33,2,101,1,102,0;0,0,33,1,34,2,71,1,72,2,99,1,100,2,101,0;0,0,33,2,86,1,88,2,97,1,98,0,99,1,100,0;0,0,33,2,96,1,98,2,99,1,100,0;0,0,32,1,33,2,96,1,97,2,98,1,99,0;0,0,33,2,79,1,80,2,97,1,98,0;0,0,31,1,32,2,79,1,80,2,96,0;0,0,31,1,32,2,79,1,80,0,81,2,96,0;0,0,31,2,79,1,80,0,84,1,85,2,94,1,95,0;0,0,31,2,81,1,82,0,87,1,88,0,90,1,93,0;0,0,30,2,83,0;0,0,29,1,30,2,83,1,84,0;0,0,29,2,82,1,83,0`.split(';').map(x=>x.split(',').map(Number));
-  function coastCoverageClass(c,r){const v=COAST_ROWS[r];let state=0;
+  function sourceCoastCoverageClass(c,r){const v=COAST_ROWS[r];let state=0;
     for(let i=0;i<v.length;i+=2){if(c<v[i])break;state=v[i+1];}return state;}
-  function outsideBrazil(c,r){const i=r*COLS+c;
+  function coastCoverageClass(c,r){return sourceCoastCoverageClass(c+CROP_WEST,r+CROP_NORTH);}
+  function sourceOutsideBrazil(c,r){const i=r*SOURCE_COLS+c;
     return !!(OUTSIDE_BRAZIL.charCodeAt(i>>3)&(128>>(i&7)));}
+  function outsideBrazil(c,r){return sourceOutsideBrazil(c+CROP_WEST,r+CROP_NORTH);}
   // BEGIN BRAZIL BOUNDARY
   // Natural Earth 1:50m admin-0 Brazil, public domain; generated by
   // tools/build_brazil_boundary.py. Drawing border and tactical mask are separate.
@@ -261,7 +277,10 @@
   }
   function migrateSavedTerrain(g){
     if(g.scenario?.id!=='invasion-brazil'||g.scenario.brazilBoundaryVersion===1)return;
-    for(const t of g.tiles)if(coastCoverageClass(t.c,t.r)!==0&&outsideBrazil(t.c,t.r)){
+    const legacyGrid=g.cols===SOURCE_COLS&&g.rows===SOURCE_ROWS;
+    for(const t of g.tiles)if(
+      (legacyGrid?sourceCoastCoverageClass(t.c,t.r):coastCoverageClass(t.c,t.r))!==0&&
+      (legacyGrid?sourceOutsideBrazil(t.c,t.r):outsideBrazil(t.c,t.r))){
       t.terrain='offmap';t.owner=null;delete t.provinceCity;
     }
     // Preserve deployed formations from older saves, moving any now-excluded
