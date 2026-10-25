@@ -199,7 +199,7 @@
         xia.expEunuchConscriptionWait--;
         continue;
       }
-      const infantry = typeFor(side,'scout',g);
+      const infantry = typeFor(g.scenario?.equipment?.[side] || side,'scout',g);
       if (infantry && TYPES[infantry]?.branch === 'Infantry') {
         let raised = 0;
         for (const hex of adjacent(g,xia)) {
