@@ -1,4 +1,4 @@
-/* Conquest configurations, independent of the map engine. The 2017 baseline is untouched. */
+/* Conquest configurations and deterministic commander starting rosters. */
 (function (root) {
   'use strict';
   const ufn2018 = {
@@ -913,6 +913,18 @@
     [ship[2], ship[3]] = britannianForwardNavy[i];
   });
 
+  // 2017 retains genuinely dual-service Britannian officers, not Euro-Britannian-only ones.
+  const DUAL_BRITANNIAN_2017 = new Set(['julius', 'kewell']);
+
+  // Strong REGULAR commander starts. Less-prominent artillery officers use rockets;
+  // the existing Elite difficulty system is unchanged.
+  const CONQUEST_COMMANDER_CLASSES = {
+    super: 'suzaku cornelia bismarck schneizel gino jeremiah dorothea nonette lelouch marianne oldrin monica luciano charles julius shin ashley manfredi augustus norland brondello leila akito ryo ayano smilas xingke zidien shalio zero kallen tohdoh cc kaguya'.split(' '),
+    heavy: 'rolo guilford darlton villetta euphemia kewell gaudefroy raymond jeanrowe johanne dore scholtz renelaurent janmanes simonmericourt kuzanmontoban alannecker franzvallo augustahighland oscar klaus fernando pierre olivia romero masaki toru miguel eduardo xianglin cao gaohai zhaohao leifeng meiling lifeng ren xiawang chengzhong sawasaki mao bolvona ohgi chiba asahina senba urabe sugiyama tamaki inoue sayoko benio kinoshita kizuna ayame indira'.split(' '),
+    siege: 'anya marrybell lloyd yukiya sarah honggu chaojielun shamna katase savitri'.split(' '),
+    rocket: 'cecile farnese anna marirrosa sophie joe ferilli chloe rakshata tianzi huangqian vritra minami diethard toruyoshida kirihara mutsuki ichijiku'.split(' '),
+  };
+
   // Every eligible roster officer receives one named starting command in each
   // Conquest. Prefer existing anonymous formations; only create fresh formations
   // if a coalition has more officers than deployed units (the 2018 U.F.N.).
@@ -927,7 +939,13 @@
     // command Euro Britannian units; both belong to the U.F.N. instead.
     if (is2018) for (const unit of armies)
       if (unit[0] === 'eb' && ['klaus','oscar'].includes(unit[5])) unit.splice(5, 2);
-    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eb','eu','cf'].includes(officer.side));
+    const availableOfficers = Object.entries(roster).filter(([id, officer]) =>
+      is2018 || ['britannia', 'eu', 'cf'].includes(officer.side) ||
+      (officer.side === 'eb' && DUAL_BRITANNIAN_2017.has(id)));
+    // Remove only their commands, retaining their original 2017 formations.
+    if (!is2018) for (const army of armies)
+      if (army[5] && roster[army[5]]?.side === 'eb' && !DUAL_BRITANNIAN_2017.has(army[5]))
+        army[5] = null;
     const used = new Set();
     for (const entry of armies) {
       const id = entry[5];
@@ -991,15 +1009,6 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
-  // Hawaii has only a couple of available land hexes at the world map scale.
-  // Its third starting formation formerly wandered to distant Alaska when
-  // occupied positions (including coastal hexes) exhausted the island.
-  // Keep the Hawaiian defenders local, and station Scholtz at Anchorage.
-  const scholtz2017 = root.KnightmareData.ARMY_DATA.filter(a => a[5] === 'scholtz');
-  if (scholtz2017.length !== 1)
-    throw new Error('Expected one Scholtz unit in the 2017 starting roster');
-  scholtz2017[0][2] = -149.9;
-  scholtz2017[0][3] = 61.2;
   // All 2018 Britannian and U.F.N. ground starts require named commanders.
   // Euro Britannia retains its anonymous land starts; navy is separate.
   ufn2018.armies = ufn2018.armies.filter(formation =>
@@ -1012,24 +1021,27 @@
   for (const formation of ufn2018.armies)
     if (formation[5] && ['britannia', 'eb'].includes(formation[0]))
       formation[4] = 3;
-  // Keep Augustus in friendly territory in both eras. In 2017 his original
-  // Fukuoka staging point is overcrowded, which can displace him into Korea.
-  // These starting-roster coordinates apply to every Conquest difficulty.
-  for (const [era, armies, lon, lat] of [
-    ['world', root.KnightmareData.ARMY_DATA, -84, 39], // Britannian North America
-    ['ufn2018', ufn2018.armies, 33, 54], // Euro Britannian western Russia
-  ]) {
-    const matches = armies.filter(army => army[5] === 'augustus');
-    if (matches.length !== 1)
-      throw new Error('Expected exactly one Augustus starting unit in ' + era);
-    matches[0][2] = lon;
-    matches[0][3] = lat;
-  }
+  // Augustus is Euro-Britannian-only here; preserve his 2018 safe starting point.
+  const augustus2018 = ufn2018.armies.filter(a => a[5] === 'augustus');
+  if (augustus2018.length !== 1)
+    throw new Error('Expected one Augustus starting unit in 2018');
+  augustus2018[0][2] = 33;
+  augustus2018[0][3] = 54;
 
   // 2017 strategic staging after commander recruitment and special officers:
   // occupy every friendly land/coastal hex in Japan and the Philippines while
   // retaining Bismarck, Charles and the imperial airship near Pendragon.
   const worldBritannian = root.KnightmareData.ARMY_DATA.filter(a => a[0] === 'britannia');
+  // The old auto-roster created seven Britannian formations solely to carry
+  // Euro-Britannian officers. Keep the same 45 formations and Pacific staging,
+  // but leave these extra reinforcements commanderless in 2017.
+  while (worldBritannian.length < 45) {
+    const reserve = ['britannia', 'medium', -120, 30, 1]; // location set by Pacific staging below
+    root.KnightmareData.ARMY_DATA.push(reserve);
+    worldBritannian.push(reserve);
+  }
+  if (worldBritannian.length !== 45)
+    throw new Error('Review 2017 Britannian formation count');
   const mustStay = id => {
     const found = worldBritannian.filter(a => a[5] === id);
     if (found.length !== 1) throw new Error('Expected one 2017 starting ' + id);
@@ -1081,6 +1093,24 @@
     army[2] = -180 + (c + 0.5 + 0.5 * (r & 1)) * 2;
     army[3] = 74 - r * (128 / 75);
   }
+  // Refit only named commanders AFTER placement and roster selection.
+  // Preserve faction, frame count and position; these are regular unit classes.
+  const startClassByCommander = {};
+  for (const [cls, ids] of Object.entries(CONQUEST_COMMANDER_CLASSES))
+    for (const id of ids) {
+      if (startClassByCommander[id]) throw new Error('Duplicate Conquest class for ' + id);
+      startClassByCommander[id] = cls;
+    }
+  // Future additions default to high-quality regular frames rather than failing setup.
+  for (const [id, officer] of Object.entries(root.KnightmareData.COMMANDERS))
+    startClassByCommander[id] ||= officer.role === 'Artillery' ? 'rocket' : 'heavy';
+  for (const armies of [root.KnightmareData.ARMY_DATA, ufn2018.armies])
+    for (const army of armies)
+      if (army[5]) {
+        if (!startClassByCommander[army[5]]) throw new Error('Unknown Conquest commander '+army[5]);
+        army[1] = startClassByCommander[army[5]];
+      }
+
   const CONQUESTS = {
     world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
     ufn2018,
