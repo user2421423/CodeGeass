@@ -116,6 +116,7 @@
         // Mao's movement debuff expires after this faction's completed turn.
         delete v.expMaoMoveActive;
         delete v.expToruExtraAttack;delete v.expToruExtraMove;
+        delete v.expEunuchMoveActive;
         delete v.expFarneseExtraMove;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
@@ -190,6 +191,26 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
+    // Conscript on Xia Wang's first friendly turn, then every second one.
+    // Empty city hexes and invalid/sea/occupied hexes never receive infantry.
+    for (const xia of mine) {
+      if (xia.cmd !== 'xiawang' || atSea(g,xia)) continue;
+      if (xia.expEunuchConscriptionWait > 0) {
+        xia.expEunuchConscriptionWait--;
+        continue;
+      }
+      const infantry = typeFor(side,'scout',g);
+      if (infantry && TYPES[infantry]?.branch === 'Infantry') {
+        let raised = 0;
+        for (const hex of adjacent(g,xia)) {
+          if (isSea(hex) || !TERRAIN[hex.terrain] || unitAt(g,hex) || stationAt(g,hex)) continue;
+          newUnit(g,infantry,side,hex.c,hex.r,1,null,false);
+          raised++;
+        }
+        if (raised) log(g,'Mass Conscription: Xia Wang mobilizes '+raised+' infantry formations.',side);
+      }
+      xia.expEunuchConscriptionWait = 1;
+    }
     // Mao reads the intentions of every enemy commander within two hexes.
     // Each target takes one morale hit and one non-stacking movement penalty
     // per Mao faction turn. Moving out of range does not remove that penalty.
@@ -266,6 +287,9 @@
       delete u.expAkitoMoveReady;
       u.moved = false;
       u.attacked = false;
+      if(HIGH_EUNUCHS.has(u.cmd))u.expEunuchShotsThisTurn=0;
+      u.expEunuchMoveActive=u.expEunuchMovePending||0;
+      delete u.expEunuchMovePending;
       if(u.cmd==='meiling'){
         u.expMeilingShotsThisTurn=0;
         meilingAwaken(g,u);
@@ -300,8 +324,8 @@
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(romeroStandFast(g,u) ? 0 : moraleFloor(g,u), desired);
       if (u.morale < desired) u.morale++;
-      else if (u.morale > desired) u.morale--;
-      if (nearby >= 2) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
+      else if (u.morale > desired && !eunuchHas(g,u,'huangqian')) u.morale--;
+      if (nearby >= 2 && !eunuchHas(g,u,'huangqian')) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
       if(u.expImperialCommand||u.expDeathEmperor)u.morale=1;
       if(eunuchHas(g,u,'huangqian'))u.morale=Math.max(0,u.morale);
       if(eunuchHas(g,u,'gaohai')&&!eunuchEnemyInterdicted(g,u))u.hp=Math.min(maxHP(u),u.hp+Math.round(maxHP(u)*.10));
@@ -348,7 +372,7 @@
       // End-of-turn-start morale recovery and allied rally effects cannot
       // break the one-turn Geass confusion.
       if (u.expCharlesMemoryRewrite) {
-        u.morale = -3;
+        if (!eunuchHas(g,u,'huangqian')) u.morale = -3;
         u.moved = true;
         u.attacked = true;
       }
@@ -359,7 +383,7 @@
     for (const s of g.stations) {
       if (s.owner !== side) continue;
       const protectedRegen=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3);
-       const normalRegen=cityStats(s)[protectedRegen?'safe':s.attackedSinceRegen?'attacked':'safe'];
+      const normalRegen=cityStats(s)[protectedRegen?'safe':s.attackedSinceRegen?'attacked':'safe'];
       const engineering=techValue(g,side,'cities.engineering');
       const administrationBonus=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.10) : 0;
       // Incoming fire halves ordinary repair, but Huang Qian still restores
