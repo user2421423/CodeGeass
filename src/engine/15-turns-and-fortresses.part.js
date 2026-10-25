@@ -266,6 +266,10 @@
       delete u.expAkitoMoveReady;
       u.moved = false;
       u.attacked = false;
+      if(u.cmd==='meiling'){
+        u.expMeilingShotsThisTurn=0;
+        meilingAwaken(g,u);
+      }
       if(u.expToruPromisePending){
         u.expToruExtraAttack=Math.max(u.expToruExtraAttack||0,1);
         u.expToruExtraMove=Math.max(u.expToruExtraMove||0,1);

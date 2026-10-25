@@ -276,6 +276,8 @@
       }
       // The charge remains intact during previews, then is spent by the
       // actual direct hit, counterattack or splash resolution.
+      // Awakening is a permanent per-formation flag, not a temporary HP aura.
+      if (target.cmd==='meiling' && target.expMeilingFinalStand) attack *= 0.70;
       if (target.expCCProtection) attack *= 0.70;
       if (target.expFarneseWithdrawal) attack *= 0.70;
       if (target.cmd === 'norland' && target.expNorlandTitan) attack *= 0.70;
@@ -361,9 +363,10 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const meilingAwakenedAttack = a.cmd==='meiling' && !!a.expMeilingFinalStand;
+    const senbaReaction=!!d&&!meilingAwakenedAttack&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    const counter = (!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
+    const counter = !meilingAwakenedAttack && ((!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
       !a.expFernandoOverloadStrike &&
       !f.noCounterAttack &&
       !followUp &&
@@ -380,7 +383,7 @@
       d.morale > -3 &&
       !atSea(g, d) &&
       inRange(d, a, g) &&
-      hostileTarget(g, d, a);
+      hostileTarget(g, d, a));
     const crit = f.guaranteedCrit ? 1 : clamp(
       t.crit +
         (f.crit || 0) +
@@ -393,14 +396,20 @@
       0,
       1,
     );
-    const counterAllowed = counter || senbaReaction;
+    const counterAllowed = counter || senbaReaction ||
+      (!!d && d.cmd==='meiling' && d.expMeilingFinalStand && d.hp>0 &&
+        !atSea(g,d) && !d.expRoloFrozen && !d.expCharlesMemoryRewrite &&
+        d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a));
     // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
     // Ordinary commanders' counterfire remains non-critical.
-    const counterCritMult = d && fx(d).guaranteedCrit && !fx(a).critImmune
+    const counterCritMult = d && fx(d).guaranteedCrit &&
+      !fx(a).critImmune && !(a.cmd==='meiling'&&a.expMeilingFinalStand)
       ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
         techValue(g, d.side, `${branchOf(d.type)}.critpower`)
       : 1;
-    const counterDamage = (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
+    const counterDamage = (d?.cmd==='meiling' && d.expMeilingFinalStand && counterAllowed
+      ? 2*Math.round(power(g,d,a,stationAt(g,a),true)/.65)
+      : senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
       : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
       (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult;
     // Preview the approximate 5% reflection; the actual volley uses HP lost
@@ -416,7 +425,7 @@
       counter: counterDamage + counterReflection,
       counterAllowed,
       // A critical hit cannot land on an immune defending formation.
-      crit: d && fx(d).critImmune ? 0 : crit,
+      crit: d && (fx(d).critImmune || d.cmd==='meiling'&&d.expMeilingFinalStand) ? 0 : crit,
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
@@ -549,6 +558,65 @@
       delete guard.expDirectIncoming;
     }
   }
+  // The one-time threshold crossing persists on the saved formation.
+  function meilingAwaken(g,unit){
+    if(!unit || unit.cmd!=='meiling' || unit.expMeilingFinalStand ||
+       unit.hp>=maxHP(unit)*.25)return false;
+    unit.expMeilingFinalStand=true;
+    recordAbilitySignal(g,unit,'FINAL STAND','buff');
+    log(g,'Final Stand: Meiling awakens permanently below 25% HP.',unit.side);
+    return true;
+  }
+  function meilingLethalSave(g,unit,attacker){
+    if(unit?.cmd!=='meiling'||!unit.expMeilingFinalStand||unit.hp>0||
+       !attacker||!foe(g,unit.side,attacker.side)||g.phase===unit.side)return false;
+    const phase=g.turn+':'+g.phase;
+    if(unit.expMeilingSurvivedPhase===phase)return false;
+    unit.expMeilingSurvivedPhase=phase;
+    unit.hp=1;
+    recordAbilitySignal(g,unit,'UNBREAKABLE — 1 HP','guard');
+    log(g,'Unbreakable: Meiling survives a lethal enemy attack at 1 HP.',unit.side);
+    return true;
+  }
+  // Two distinct reaction strikes, rather than a single doubled damage
+  // number. Counter-counter reactions cannot recursively trigger each other.
+  const meilingRetaliationGuard=new WeakSet();
+  function meilingDoubleRetaliation(g,meiling,attacker){
+    if(meilingRetaliationGuard.has(g)||!meiling?.expMeilingFinalStand||
+       meiling.cmd!=='meiling'||meiling.hp<=0||!attacker||attacker.hp<=0||
+       !foe(g,meiling.side,attacker.side)||atSea(g,meiling)||
+       meiling.expRoloFrozen||meiling.expCharlesMemoryRewrite||
+       meiling.morale<=-3||!inRange(meiling,attacker,g)||
+       !hostileTarget(g,meiling,attacker))return 0;
+    let total=0;
+    meilingRetaliationGuard.add(g);
+    try {
+      for(let i=0;i<2&&attacker.hp>0&&meiling.hp>0;i++){
+        // Cancel the usual 65% counterfire factor: both strikes are full power.
+        const raw=Math.max(1,Math.round(power(g,meiling,attacker,
+          stationAt(g,attacker),true)/.65*(.94+random(g)*.12)));
+        if(attacker.expCCProtection)delete attacker.expCCProtection;
+        let incoming=raw;
+        if(fx(attacker).futureSightDodge&&random(g)<fx(attacker).futureSightDodge){
+          incoming=0;
+          recordAbilitySignal(g,attacker,'EVADED','guard');
+        }
+        const previous=attacker.hp;
+        const landed=smilasDealCombatDamage(g,attacker,meiling,incoming);
+        total+=landed;
+        recordWarEvent(g,'damage',meiling.side,{targetSide:attacker.side,
+          value:previous-attacker.hp,unitId:meiling.id,group:warGroup(g,meiling)});
+        recordAbilityAttack(g,meiling,attacker,previous-attacker.hp);
+        if(attacker.hp<=0){
+          attacker.expDirectIncoming=true;
+          kill(g,attacker,meiling,false,null,incoming);
+          delete attacker.expDirectIncoming;
+        }
+      }
+      if(total||attacker.hp>0)recordAbilitySignal(g,meiling,'DOUBLE COUNTER','guard');
+    }finally{meilingRetaliationGuard.delete(g);}
+    return total;
+  }
   function smilasDealCombatDamage(g, victim, attacker, amount, allowJohanne=true) {
     // Scripted volleys, support strikes and splash cannot bypass the same
     // barrier that prevents ordinary ranged targeting.
@@ -571,7 +639,13 @@
       kill(g,ally,attacker,false,null,split.redirected);
     }
     victim.hp = Math.max(0,victim.hp-split.primary);
+    meilingAwaken(g,victim);
+    meilingLethalSave(g,victim,attacker);
     klausLoyaltyAfterHit(g, victim, attacker, priorHP);
+    // A Meiling reaction is a free response, never a standard attack action.
+    // Indirect splash explicitly opts out via allowJohanne=false.
+    if(allowJohanne && attacker && split.primary>0)
+      meilingDoubleRetaliation(g,victim,attacker);
     return split.primary;
   }
   // force: nothing survives (F.L.E.I.J.A.); C.C.'s Code Bearer
@@ -579,6 +653,8 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null, incomingDamage = 0) {
     if (v.hp > 0) return;
+    // Other attack paths may damage HP without using smilasDealCombatDamage.
+    if(!force){meilingAwaken(g,v);if(meilingLethalSave(g,v,attacker))return;}
     // Marianne's Awakening: Anya survives an otherwise fatal hit at full HP.
     // The per-formation stamp persists in saves and follows the game's global turns.
     // Forced kills (F.L.E.I.J.A., lost carrier cargo) remain final.
@@ -699,6 +775,15 @@
         if (v.cmd) {
           honorAction(g, attacker, 'commanderDefeats');
           award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
+          // Only a confirmed enemy COMMANDER kill heals Meiling.
+          if(attacker.cmd==='meiling' && attacker.hp>0 &&
+             foe(g,v.side,attacker.side)){
+            const heal=Math.max(1,Math.round(maxHP(attacker)*.10));
+            const before=attacker.hp;
+            attacker.hp=Math.min(maxHP(attacker),attacker.hp+heal);
+            recordAbilitySignal(g,attacker,'COMMANDER KILL +'+(attacker.hp-before)+' HP','heal');
+            log(g,'Meiling heals 10% maximum HP for defeating an enemy commander.',attacker.side);
+          }
         }
       }
       // Asura Strike Force: actual combat kills, including lethal counterfire,
@@ -836,7 +921,7 @@
       // A persistent Johanne ward redirects the entire first initiating
       // strike. It does not grant the remote bodyguard free counterfire.
       johanneRedirect = !!johanneBodyguard(g,d,a),
-      crit = !(d && fx(d).critImmune) && random(g) < pr.crit,
+      crit = !(d && (fx(d).critImmune||d.cmd==='meiling'&&d.expMeilingFinalStand)) && random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
@@ -868,6 +953,7 @@
     if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
+    if(a.cmd==='meiling')a.expMeilingShotsThisTurn=(a.expMeilingShotsThisTurn||0)+1;
     if(a.expMaskFalls?.attackReady)a.expMaskFalls.attackReady=false;
     honorAction(g, a, 'combats');
     a.moved = true;
@@ -947,9 +1033,12 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!(a.cmd==='meiling'&&a.expMeilingFinalStand)&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    if (!johanneRedirect && a.hp > 0 && d && d.hp > 0 && manfrediSuperiority(g,a,d)<2 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+    if (!johanneRedirect && a.hp > 0 && d && d.hp > 0 &&
+        !(a.cmd==='meiling'&&a.expMeilingFinalStand) &&
+        d.cmd!=='meiling' && manfrediSuperiority(g,a,d)<2 &&
+        (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       // Guaranteed critical counterfire uses the same critical multiplier as
       // a normal attacking volley; other defenders keep ordinary counterfire.
@@ -1104,6 +1193,10 @@
       guilfordCleanse(protectedAlly);
       delete protectedAlly.expGuilfordSavedAttack;
     }
+    // The awakened Meiling has exactly two initiating attacks per friendly
+    // turn. This is counted independently of kill-based Breakthrough refreshes.
+    if(a.cmd==='meiling'&&a.expMeilingFinalStand&&a.hp>0)
+      a.attacked=(a.expMeilingShotsThisTurn||0)>=2;
     // Banked Last Promise attacks are earned IN ADDITION to an ordinary
     // attack and do not bypass commander skill cooldowns or kill-chain caps.
     if(a.hp>0&&a.expToruExtraAttack>0&&a.attacked){

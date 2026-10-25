@@ -254,6 +254,8 @@
     const out = [];
     if (u.skillMarks?.length) out.push('Designated target');
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
+    if(u.cmd==='meiling'&&u.expMeilingFinalStand)
+      out.push('Final Stand awakened: 30% less damage, no critical hits or counterfire, two attacks per turn, double retaliation, one lethal save per hostile turn, +10% HP per enemy commander kill');
     if(u.expMaoMovePending||u.expMaoMoveActive)out.push('Mao — Psychological Pressure: next turn movement −2');
     if(fx(u).mindReadAdjacent)out.push('Absolute Mind Reading: adjacent enemies cannot attack this formation');
     if(u.expZeroGeass)out.push('Geass Absolute Command: counterattacks suppressed');

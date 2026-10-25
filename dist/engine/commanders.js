@@ -465,9 +465,9 @@
       role: 'Armor',
       hull: 'Akatsuki',
       title: 'Akatsuki pilot',
-      skill: 'Iron Resolve',
-      desc: 'Takes 30% less damage while below half its frame.',
-      fx: { belowHalf: 0.7 },
+      skill: 'Final Stand — Unbreakable',
+      desc: 'Permanent awakening the first time she falls below 25% HP: 30% less combat damage, immunity to critical hits, no enemy counterattacks, and two initiated attacks per friendly turn. Survives one otherwise-lethal enemy combat strike per hostile faction turn at 1 HP. Each enemy commander she personally kills heals 10% maximum HP. When attacked by a formation she can reach with her normal weapon, she automatically makes two separate full-strength retaliations, without spending normal attack actions.',
+      fx: { meilingAwakening: true },
       recruit: 200,
     },
     lifeng: {
