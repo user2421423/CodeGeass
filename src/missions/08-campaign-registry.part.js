@@ -225,6 +225,24 @@
     }
     // Normal-only override must not secretly restore an earlier victory.
     if (Number.isFinite(m.normalHold) && m.normalHold < 13) m.normalHold = 16;
+    // Keep all displayed hold requirements consistent with the final win test.
+    // Preserve unrelated historical events (e.g. the Fuji eruption on turn 4).
+    const requiredHold = (Array.isArray(m.win) ? m.win : [m.win])
+      .find(condition => Number.isFinite(condition?.hold))?.hold;
+    if (requiredHold && typeof m.objective === 'string') {
+      m.objective = m.objective.replace(
+        /\\b(through|until|end of)\\s+turn\\s+\\d+\\b/gi,
+        (_, preposition) => preposition + ' turn ' + requiredHold);
+      if (!m.objective.includes('turn ' + requiredHold))
+        m.objective += ' Maintain the defensive objective through turn ' + requiredHold + '.';
+    }
+    if (requiredHold)
+      m.events = (m.events || []).map(event => {
+        if (typeof event.note !== 'string') return event;
+        return { ...event, note: event.note.replace(
+          /\\b(through|until|end of)\\s+turn\\s+\\d+\\b/gi,
+          (_, preposition) => preposition + ' turn ' + requiredHold) };
+      });
     if (m.lose?.turns && m.lose.turns < 20)
       m.lose = { ...m.lose, turns: 22 };
     if (Number.isFinite(m.normalTurns) && m.normalTurns < 20)
