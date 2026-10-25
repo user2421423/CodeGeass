@@ -650,7 +650,20 @@
     // cannot rescue an expired mission (including saves resumed from an older rules version).
     const limit = campaignTurnLimit(g, m);
     if (!reason && limit && g.turn > limit) reason = `Turn ${limit} has passed. The mission has failed.`;
-    const won = asList(m.win).every(c => holds(g, c));
+    // Reaching an exit is a one-time objective: do not require the same unit
+    // to stand motionless on one hex for several extra turns while reinforcements
+    // continue fighting. Captured cities still need to remain under control.
+    const reached = (g.campaign.reachedObjectives ||= []);
+    const objectivesMet = asList(m.win).every(c => {
+      if (!c.reach) return holds(g, c);
+      const key = JSON.stringify(c.reach) + '|' + (c.by || '');
+      if (holds(g, c)) {
+        if (!reached.includes(key)) reached.push(key);
+        return true;
+      }
+      return reached.includes(key);
+    });
+    const won = g.turn >= (m.minimumVictoryTurn || 1) && objectivesMet;
     if (!reason && won) {
       const st = stars(g);
       g.over = { winner: P, reason: m.victory || 'Mission accomplished.', stars: st.filter(Boolean).length, starList: st };
@@ -662,7 +675,9 @@
   function objective(g) {
     const m = mission(g.campaign.id);
     const limit = campaignTurnLimit(g, m);
-    return `${g.campaign.note || m.objective}${limit ? ` Turn limit ${limit}.` : ''}`;
+    const min = m.minimumVictoryTurn || 1;
+    const gate = g.turn < min ? ` Victory available from turn ${min}; keep your objectives secure.` : '';
+    return `${g.campaign.note || m.objective}${gate}${limit ? ` Turn limit ${limit}.` : ''}`;
   }
   function title(g) {
     const m = mission(g.campaign.id);
