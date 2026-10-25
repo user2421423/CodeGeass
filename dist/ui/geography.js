@@ -855,6 +855,18 @@ const GEOGRAPHY = (() => {
     if(path)for(const ring of rings)roundedRing(path,ring,R*.85);
     return {tiles,rings,path};
   }
+  // Area 18's gameplay mask is already sampled to a fixed hex grid. Never
+  // round its *clipping* outline: that moves borders away from the real land
+  // cells and can connect islands or tint neighbouring shores.
+  function exactContourCoverage(tiles) {
+    const rings=coverageRings(tiles),path=FAST_PATH?new Path2D():null;
+    if(path)for(const ring of rings){
+      path.moveTo(...ring[0]);
+      for(let i=1;i<ring.length;i++)path.lineTo(...ring[i]);
+      path.closePath();
+    }
+    return {tiles,rings,path,exact:true};
+  }
   let regionalReliefCache=null;
   // Keep relief visible without painting distracting opaque biome rectangles.
   // This shared treatment applies to every geographically rendered scenario.
@@ -934,7 +946,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (mapMeta(g).coastBuffer || 2)) continue;
+      if (depth[j] >= (mapMeta(g).coastBuffer ?? 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -987,7 +999,8 @@ const GEOGRAPHY = (() => {
     for (const group of cache.groups.values()) for (const t of group) add(t);
     // Unowned playable land remains visible; offmap countries are outside the theatre.
     for (const t of g.tiles) if (t.terrain !== 'sea' && t.terrain !== 'offmap') add(t);
-    cache.visibleLand = contourCoverage(tiles);
+    cache.visibleLand = g.scenario?.id==='area-18'
+      ? exactContourCoverage(tiles) : contourCoverage(tiles);
     return localCoverage(cache.visibleLand, left, right, top, bottom);
   }
   // Rasterizing the entire theatre's 10,000-hex clipping stencil in every
@@ -1011,7 +1024,13 @@ const GEOGRAPHY = (() => {
   function clipRegionalLand(ctx, coverage) {
     if (coverage.path) return ctx.clip(coverage.path);
     ctx.beginPath();
-    if(coverage.rings)for(const ring of coverage.rings)roundedRing(ctx,ring,R*.85);
+    if(coverage.rings)for(const ring of coverage.rings){
+      if(coverage.exact){
+        ctx.moveTo(...ring[0]);
+        for(let i=1;i<ring.length;i++)ctx.lineTo(...ring[i]);
+        ctx.closePath();
+      }else roundedRing(ctx,ring,R*.85);
+    }
     else for (const t of coverage.tiles) tacticalHex(ctx, t, R + .8);
     ctx.clip();
   }
@@ -1447,7 +1466,10 @@ const GEOGRAPHY = (() => {
     const reliefLand=paths(ctx,shapes,a,b,c,d);
     if(reliefLand)clipPath(ctx,reliefLand);
     ctx.transform(invA,invC,invB,invD,invX,invY);
-    paintRegionalRelief(ctx,g,left,right,top,bottom);
+    // At overview scale the artificial terrain polygons overwhelm the small
+    // Arabian landmask. The exact geographic base and unit terrain remain.
+    if(g.scenario?.id!=='area-18')
+      paintRegionalRelief(ctx,g,left,right,top,bottom);
     ctx.restore();
     // Greenland's ice cap lies above the national coastal tint. Render it as
     // snowy relief while retaining the actual GSHHG silhouette under all hexes.
