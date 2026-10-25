@@ -46,7 +46,7 @@ assert.match(E.repairReason(g,enemy),/interdiction/i,'Shared supply interdiction
 // Immunity and uncounterable attacks work during full combat preview.
 const pr=E.preview(g,defender.id,enemy.c,enemy.r);
 assert(pr,'Huang must have a legal adjacent target');
-assert.equal(pr.counterAllowed,false,'Huang's attacks cannot be countered');
+assert.equal(pr.counterAllowed,false,"Huang's attacks cannot be countered");
 assert.equal(pr.counter,0,'Counterdamage preview must also be zero');
 const reversed=E.preview(g,enemy.id,defender.c,defender.r);
 assert(reversed,'Enemy must be able to target Huang');
