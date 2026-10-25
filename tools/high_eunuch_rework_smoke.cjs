@@ -60,7 +60,7 @@ const ally=make(null,'cf',near[1]);
 const foe=make(null,'britannia',near[2]);
 foe.hp=0;
 const credits=I.funds(g,'cf').credits;
-I.kill(g,foe,ally);
+E.kill(g,foe,ally);
 assert(I.funds(g,'cf').credits>credits,'War Profiteering rewards nearby allied kills');
 
 // Zhao Hao's commander kill grants next-turn movement to nearby Eunuchs.
@@ -68,7 +68,7 @@ g.units=[];
 const zhao=make('zhaohao','cf',city);
 const qian=make('huangqian','cf',near[0]);
 const target=make('kewell','britannia',near[1]);target.hp=0;
-I.kill(g,target,zhao);
+E.kill(g,target,zhao);
 assert.equal(zhao.expEunuchMovePending,1,'Zhao receives next-turn movement');
 assert.equal(qian.expEunuchMovePending,1,'Nearby Eunuch receives next-turn movement');
 const moveBefore=E.movement(g,qian);
