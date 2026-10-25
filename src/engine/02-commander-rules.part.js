@@ -4,6 +4,19 @@
   // but the existing combat pipeline can read both without applying either twice.
   const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
     [id, { ...(c.stats || {}), ...c.fx }]));
+  // The five eunuchs grant their own shared power to themselves and to other
+  // living High Eunuchs within three hexes. Other formations never inherit it.
+  const HIGH_EUNUCHS = new Set(['gaohai','zhaohao','xiawang','chengzhong','huangqian']);
+  function eunuchHas(g, u, source) {
+    return !!(u && HIGH_EUNUCHS.has(u.cmd) && g.units.some(v =>
+      v.hp > 0 && v.side === u.side && v.cmd === source &&
+      (!v.carriedBy && !v.embarked) && dist(g, v, u) <= 3));
+  }
+  function eunuchEnemyInterdicted(g, u) {
+    return !!(u && g.units.some(v => v.hp > 0 && foe(g,v.side,u.side) &&
+      HIGH_EUNUCHS.has(v.cmd) && eunuchHas(g,v,'chengzhong') &&
+      dist(g,v,u) <= 2));
+  }
   const COMMANDER_VERSION = 3;
   function commanderStatsText(k) {
     const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
