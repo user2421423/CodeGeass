@@ -826,13 +826,13 @@ const GEOGRAPHY = (() => {
     }
     target.closePath();
   }
-  function simplifyContour(ring) {
+  function simplifyContour(ring, tolerance=R*.5) {
     // Suppress the one-hex staircase while keeping displacement below half a
     // hex. Split the closed ring before RDP so its closing edge is preserved.
     function simplify(points){
       if(points.length<3)return points;
       const a=points[0],b=points[points.length-1],dx=b[0]-a[0],dy=b[1]-a[1];
-      let best=R*R*.25,index=-1;
+      let best=tolerance*tolerance,index=-1;
       for(let i=1;i<points.length-1;i++){
         const p=points[i],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1)));
         const d=(p[0]-a[0]-t*dx)**2+(p[1]-a[1]-t*dy)**2;
@@ -850,8 +850,8 @@ const GEOGRAPHY = (() => {
       ...simplify([...ring.slice(split),ring[0]]).slice(0,-1)];
     return result.length>=3?result:ring;
   }
-  function contourCoverage(tiles) {
-    const rings=coverageRings(tiles).map(simplifyContour),path=FAST_PATH?new Path2D():null;
+  function contourCoverage(tiles, tolerance=R*.5) {
+    const rings=coverageRings(tiles).map(ring=>simplifyContour(ring,tolerance)),path=FAST_PATH?new Path2D():null;
     if(path)for(const ring of rings)roundedRing(path,ring,R*.85);
     return {tiles,rings,path};
   }
@@ -862,6 +862,13 @@ const GEOGRAPHY = (() => {
     forest:{fill:'rgba(36,79,51,.045)'},
     desert:{fill:'rgba(235,198,126,.070)'},
     mountain:{fill:'rgba(76,67,55,.080)'},
+  };
+  // Area 18 is almost entirely arid: its terrain must remain legible beneath
+  // faction colours at the strategic scale without changing tactical terrain.
+  const AREA18_RELIEF={
+    forest:{fill:'rgba(44,93,57,.12)'},
+    desert:{fill:'rgba(247,207,131,.14)'},
+    mountain:{fill:'rgba(68,55,43,.19)',edge:'rgba(64,50,39,.07)'},
   };
   function paintRegionalRelief(ctx,g,left,right,top,bottom) {
     const revision=g.mapTerrainRevision||0;
@@ -890,9 +897,9 @@ const GEOGRAPHY = (() => {
     ctx.save();
     // Feather relief masks in the same world-space paint on every atlas chunk.
     // The atlas overscan is sized to retain the blur across chunk edges.
-    if (typeof ctx.filter === 'string') ctx.filter='blur(12px)';
+    if (typeof ctx.filter === 'string') ctx.filter=g.scenario?.id==='area-18'?'blur(5px)':'blur(12px)';
     for(const layer of regionalReliefCache.layers){
-      const style=REGIONAL_RELIEF[layer.kind];
+      const style=(g.scenario?.id==='area-18'?AREA18_RELIEF:REGIONAL_RELIEF)[layer.kind];
       ctx.fillStyle=style.fill;
       if(!layer.path){ctx.beginPath();for(const ring of layer.rings)roundedRing(ctx,ring,R*.85);}
       layer.path?ctx.fill(layer.path):ctx.fill();
@@ -934,7 +941,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (mapMeta(g).coastBuffer || 2)) continue;
+      if (depth[j] >= (mapMeta(g).coastBuffer ?? 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -968,6 +975,17 @@ const GEOGRAPHY = (() => {
     ]) addTint(owner[i], { c, r });
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
+  }
+  // Area 18 uses rounded cartographic ownership contours in the overview.
+  // Only the artwork is smoothed: captures, pathfinding and all tile owners
+  // continue to use the original, unsmoothed hex grid.
+  function area18PoliticalContour(g,side,tiles) {
+    if(g.scenario?.id!=='area-18')return null;
+    const cache=japanColorCache;
+    cache.politicalContours ||= new Map();
+    if(!cache.politicalContours.has(side))
+      cache.politicalContours.set(side,contourCoverage(tiles,R*.85));
+    return cache.politicalContours.get(side);
   }
   // Offmap territory is not a neutral country: it is outside this scenario's playable theatre.
   // The active geographic map is the playable land plus the SAME short
@@ -1418,6 +1436,16 @@ const GEOGRAPHY = (() => {
           const faction = g.factions?.[side] || E.FACTIONS[side];
           if (!faction?.color) continue;
           ctx.fillStyle = faction.color;
+          const smooth=area18PoliticalContour(g,side,tiles);
+          if(smooth){
+            if(smooth.path)ctx.fill(smooth.path);
+            else{
+              ctx.beginPath();
+              for(const ring of smooth.rings)roundedRing(ctx,ring,R*.85);
+              ctx.fill();
+            }
+            continue;
+          }
           const ownerPath = FAST_PATH && right-left <= 2048 && bottom-top <= 2048 ? new Path2D() : null;
           if (!ownerPath) ctx.beginPath();
           for (const t of tiles) {

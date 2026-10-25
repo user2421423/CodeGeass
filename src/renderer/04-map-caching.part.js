@@ -421,12 +421,12 @@ function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRo
 // with ownership at load time misses territory captured before the save was made.
 // Use the same geographic clipping and faction stencil as tactical zoom.
 function drawStrategicCurrentOwnership() {
-  if (!mapAtlasFallback.ready) return;
+  if (!mapAtlasFallback.ready) return false;
   const state = mapAtlasStrategicOwners;
-  if (state.tiles !== game.tiles) return;
+  if (state.tiles !== game.tiles) return false;
   const revision = game.mapRevision || 0;
   const image = mapAtlasFallback.image;
-  if (!image?.naturalWidth || !image?.naturalHeight) return;
+  if (!image?.naturalWidth || !image?.naturalHeight) return false;
   if (state.revision !== revision || state.source !== image || !state.canvas) {
     // This canvas is built only when ownership or the backdrop changes, never
     // while panning or on every frame. Cap its resolution for large theatres.
@@ -447,12 +447,13 @@ function drawStrategicCurrentOwnership() {
     } finally {
       ctx = mainCtx;
     }
-    if (!painted) return;
+    if (!painted) return false;
     state.canvas = canvas;
     state.source = image;
     state.revision = revision;
   }
   ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
+  return true;
 }
 // Keep a complete cached regional detail level during zoom. The current
 // renderer still owns job scheduling, memory budgets and political invalidation.
@@ -488,8 +489,10 @@ function regionLODPrevious() {
       ? mapAtlasShown.scale:null;
 }
 function regionLODBackdrop(){
-  ctx.drawImage(mapAtlasFallback.image,0,0,WORLD_W,WORLD_H);
-  drawStrategicCurrentOwnership();
+  // The ownership canvas is an opaque, current-map picture. Do not first
+  // draw the published WebP only to cover it with another full map image.
+  if(!drawStrategicCurrentOwnership())
+    ctx.drawImage(mapAtlasFallback.image,0,0,WORLD_W,WORLD_H);
 }
 function regionLODOldOrBackdrop(left,right,top,bottom){
   const old=regionLODPrevious();
@@ -673,9 +676,9 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     }
     if (missing.length) {
       mapAtlasPerformance.snapshotFrames++;
-      for (let shift=firstShift;shift<=lastShift;shift++)
+      if(split)regionLODBackdrop();
+      else for (let shift=firstShift;shift<=lastShift;shift++)
         ctx.drawImage(backdrop, shift*WORLD_W, 0, WORLD_W, WORLD_H);
-      if (split) drawStrategicCurrentOwnership();
       // Schedule at most the visible missing tiles; don't build any on the
       // pointer-move/render stack, and don't show unfinished partial chunks.
       for (const job of missing)
