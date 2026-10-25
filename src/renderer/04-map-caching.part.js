@@ -438,9 +438,9 @@ function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRo
 // with ownership at load time misses territory captured before the save was made.
 // Use the same geographic clipping and faction stencil as tactical zoom.
 function drawStrategicCurrentOwnership() {
-  if (!mapAtlasFallback.ready) return;
+  if (!mapAtlasFallback.ready) return false;
   const state = mapAtlasStrategicOwners;
-  if (state.tiles !== game.tiles) return;
+  if (state.tiles !== game.tiles) return false;
   const revision = game.mapRevision || 0;
   const image = mapAtlasFallback.image;
   const imageWidth = image?.naturalWidth || image?.width;
@@ -466,12 +466,13 @@ function drawStrategicCurrentOwnership() {
     } finally {
       ctx = mainCtx;
     }
-    if (!painted) return;
+    if (!painted) return false;
     state.canvas = canvas;
     state.source = image;
     state.revision = revision;
   }
   ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
+  return true;
 }
 // Keep a complete cached regional detail level during zoom. The current
 // renderer still owns job scheduling, memory budgets and political invalidation.
@@ -507,8 +508,10 @@ function regionLODPrevious() {
       ? mapAtlasShown.scale:null;
 }
 function regionLODBackdrop(){
-  ctx.drawImage(mapAtlasFallback.image,0,0,WORLD_W,WORLD_H);
-  drawStrategicCurrentOwnership();
+  // Avoid showing outdated pre-rendered Arabian political artwork when the
+  // current geographic snapshot is ready (including changes in saved games).
+  if(!drawStrategicCurrentOwnership())
+    ctx.drawImage(mapAtlasFallback.image,0,0,WORLD_W,WORLD_H);
 }
 function regionLODOldOrBackdrop(left,right,top,bottom){
   const old=regionLODPrevious();
