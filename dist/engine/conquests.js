@@ -1111,6 +1111,33 @@
         army[1] = startClassByCommander[army[5]];
       }
 
+
+  // Balance Britannian super-heavy commands against the other Conquest powers.
+  // The 2017 E.U. has five super-heavy commanders; 2018 Euro Britannia has seven.
+  // The combined 2018 U.F.N. roster represents three former factions, so it
+  // retains its larger overall number of super-heavy commanders.
+  // Only change the unit CLASS for named Britannian units: no Elite Forces,
+  // commander removals, unit count changes, or changes to staging and stacks.
+  const BRITANNIAN_SUPERS_2017 = new Set(['suzaku', 'cornelia', 'bismarck', 'charles', 'lelouch']);
+  const BRITANNIAN_SUPERS_2018 = new Set([
+    'suzaku', 'cornelia', 'bismarck', 'charles', 'lelouch', 'jeremiah', 'schneizel',
+  ]);
+  for (const [year, units, retained] of [
+    ['2017', root.KnightmareData.ARMY_DATA, BRITANNIAN_SUPERS_2017],
+    ['2018', ufn2018.armies, BRITANNIAN_SUPERS_2018],
+  ]) {
+    for (const formation of units) {
+      if (formation[0] !== 'britannia' || !formation[5] || formation[1] !== 'super' ||
+          retained.has(formation[5])) continue;
+      // Schneizel is a ranged commander, so keep his 2017 formation in Artillery
+      // rather than converting him to an ordinary heavy-armored front-line unit.
+      formation[1] = year === '2017' && formation[5] === 'schneizel' ? 'siege' : 'heavy';
+    }
+    const active = units.filter(a => a[0] === 'britannia' && a[5] && a[1] === 'super');
+    if (active.length !== retained.size || active.some(a => !retained.has(a[5])))
+      throw new Error('Invalid ' + year + ' Britannian super-heavy commander balance');
+  }
+
   const CONQUESTS = {
     world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
     ufn2018,
