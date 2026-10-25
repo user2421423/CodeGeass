@@ -356,15 +356,16 @@
     // Shield recovery follows the city's engineering upgrades and Huang Qian's nearby administration aura.
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const normalRegen=cityStats(s)[s.attackedSinceRegen?'attacked':'safe'];
+      const protectedRegen=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3);
+       const normalRegen=cityStats(s)[protectedRegen?'safe':s.attackedSinceRegen?'attacked':'safe'];
       const engineering=techValue(g,side,'cities.engineering');
-      const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.15) : 0;
+      const administrationBonus=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.10) : 0;
       // Incoming fire halves ordinary repair, but Huang Qian still restores
       // the full additional 15% maximum shields every friendly turn.
       const occupant=unitAt(g,s);
       const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
       const gaudefroyRate=occupant?.side===side ? fx(occupant).fortressRegeneration : 0;
-      const recovery=miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
+      const recovery=(!protectedRegen&&(miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side))
         ? 0 : (normalRegen+engineering+administrationBonus)*(gaudefroyRate||1);
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(recovery));
