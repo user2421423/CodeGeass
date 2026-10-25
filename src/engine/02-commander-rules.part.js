@@ -8,9 +8,9 @@
   // living High Eunuchs within three hexes. Other formations never inherit it.
   const HIGH_EUNUCHS = new Set(['gaohai','zhaohao','xiawang','chengzhong','huangqian']);
   function eunuchHas(g, u, source) {
-    return !!(u && HIGH_EUNUCHS.has(u.cmd) && g.units.some(v =>
+    return !!(u && HIGH_EUNUCHS.has(u.cmd) && !atSea(g,u) && g.units.some(v =>
       v.hp > 0 && v.side === u.side && v.cmd === source &&
-      (!v.carriedBy && !v.embarked) && dist(g, v, u) <= 3));
+      !atSea(g,v) && !v.carriedBy && !v.embarked && dist(g, v, u) <= 3));
   }
   function eunuchEnemyInterdicted(g, u) {
     return !!(u && g.units.some(v => v.hp > 0 && foe(g,v.side,u.side) &&
