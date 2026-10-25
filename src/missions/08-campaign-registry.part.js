@@ -195,6 +195,87 @@
                     ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN])
     longerStoryMission(m);
 
+
+  // Second experimental pass: a hard floor on successful Story Mode completion.
+  // The existing 17–19 turn defensive operations retain their longer objective.
+  const STORY_MINIMUM_VICTORY_TURN = 13;
+  const STORY_PHASED_MISSIONS = new Set([
+    'bk1', 'bk3', 'bk4', 'cf1', 'cf10', 'cf6', 'br_mef',
+    'br2', 'br3', 'bk5', 'br_execution', 'eu_ambush',
+  ]);
+  const allStoryMissions = [
+    ...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA,
+    ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN,
+  ];
+  for (const m of allStoryMissions) {
+    m.minimumVictoryTurn = STORY_MINIMUM_VICTORY_TURN;
+    const shortHold = condition =>
+      condition?.hold && condition.hold < 13
+        ? { ...condition, hold: 16 } : condition;
+    m.win = Array.isArray(m.win) ? m.win.map(shortHold) : shortHold(m.win);
+    // Normal-only override must not secretly restore an earlier victory.
+    if (Number.isFinite(m.normalHold) && m.normalHold < 13) m.normalHold = 16;
+    if (m.lose?.turns && m.lose.turns < 20)
+      m.lose = { ...m.lose, turns: 22 };
+    if (Number.isFinite(m.normalTurns) && m.normalTurns < 20)
+      m.normalTurns = 22;
+    m.stars = (m.stars || []).map(star =>
+      Number.isFinite(star.turns) && star.turns < STORY_MINIMUM_VICTORY_TURN
+        ? { ...star, turns: 15 } : star);
+    if (typeof m.objective === 'string' && !m.objective.includes('Turn 13 minimum')) {
+      // Give the player a visible reason the mission does not end the instant
+      // they first take the required city or eliminate its commander.
+      m.objective += ' Secure your objectives and survive enemy counterattacks. Turn 13 minimum.';
+    }
+
+    if (m.id === 'eb_ark') {
+      // The bomb sequence must remain a real, achievable time challenge.
+      m.events = (m.events || []).map(e =>
+        !Number.isFinite(e.turn) || e.turn <= 1
+          ? e : { ...e, turn: (e.turn === 4 ? 15 : e.turn === 5 ? 16 : e.turn) });
+      m.stars = m.stars.map(star => star.text === 'Win before the time bombs go off'
+        ? { ...star, turns: 15 } : star);
+    }
+    if (m.id === 'eu_apollo') {
+      // The AI can capture launch control but cannot intentionally park the
+      // named pilot on exactly one hex. Preserve Ayano's necessary survival
+      // without making the mission unwinnable for an AI-controlled player.
+      m.win = [{ capture: ['Apollo’s Chariot Launch Control'] }, { alive: ['ayano'] }];
+      m.objective = 'Capture Apollo’s Chariot Launch Control with Ayano alive. Stop the launch before turn 27. Turn 13 minimum.';
+      m.events = (m.events || []).map(e => {
+        const next = { ...e };
+        if (next.warn?.label?.startsWith('Launch deadline'))
+          next.warn = { ...next.warn, label: 'Launch deadline: turn 27' };
+        if (typeof next.note === 'string')
+          next.note = next.note.replace(/by the end of turn \d+/, 'by the end of turn 27');
+        return next;
+      });
+    }
+
+    if (!STORY_PHASED_MISSIONS.has(m.id)) continue;
+    const ally = side => side === m.player ||
+      (m.teams?.[side] && m.teams[side] === m.teams[m.player]);
+    const templates = {};
+    for (const unit of m.units) {
+      const [side, kind, c, r, stack, , opts = {}] = unit;
+      // Use only equipment already present in this exact battle. Never copy
+      // named officers or an Elite unit's unique machine.
+      if (String(kind).startsWith('elite_') || opts.cargo || opts.skipNormal) continue;
+      (templates[side] ||= []).push([side, kind, c, r, Math.min(stack || 1, 2)]);
+    }
+    for (const turn of [5, 9, 12]) {
+      const spawn = [];
+      for (const [side, units] of Object.entries(templates)) {
+        const number = ally(side) ? 1 : 2;
+        for (let i = 0; i < number; i++) {
+          const selected = units[(turn + i) % units.length];
+          spawn.push([...selected, null]);
+        }
+      }
+      if (spawn.length) m.events.push({ turn, spawn });
+    }
+  }
+
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
