@@ -370,7 +370,7 @@
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const meilingAwakenedAttack = a.cmd==='meiling' && !!a.expMeilingFinalStand;
-    const senbaReaction=!!d&&!meilingAwakenedAttack&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!eunuchHas(g,a,'huangqian')&&!meilingAwakenedAttack&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter = !meilingAwakenedAttack && ((!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
       !a.expFernandoOverloadStrike &&
@@ -414,11 +414,11 @@
       ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
         techValue(g, d.side, `${branchOf(d.type)}.critpower`)
       : 1;
-    const counterDamage = (d?.cmd==='meiling' && d.expMeilingFinalStand && counterAllowed
+    const counterDamage = counterAllowed && (d?.cmd==='meiling' && d.expMeilingFinalStand && counterAllowed
       ? 2*Math.round(power(g,d,a,stationAt(g,a),true)/.65)
       : senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
       : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
-      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult;
+      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult || 0;
     // Preview the approximate 5% reflection; the actual volley uses HP lost
     // after damage rolls and interception, and reflects only if Xingke survives.
     const counterReflection = counterAllowed && d.hp > unitDmg && fx(d).counterReflect
@@ -757,6 +757,26 @@
       if (attacker.hp <= 0) kill(g,attacker,null,false,v.side,0);
     }
     dropCarriedEliminator(g, v, 'carrier destroyed');
+    if(!v.warCounted && !force && attacker && foe(g,v.side,attacker.side)) {
+      for(const gao of g.units){
+        if(gao.hp<=0||gao.cmd!=='gaohai'||gao.side!==attacker.side||atSea(g,gao)||
+           dist(g,gao,attacker)>3)continue;
+        if(!g.units.some(e=>e.hp>0&&e.side===gao.side&&e.id!==gao.id&&
+          HIGH_EUNUCHS.has(e.cmd)&&dist(g,e,gao)<=3))continue;
+        const prize=Math.max(0,Math.round(price(v.type,v.stack||1).credits*.25));
+        funds(g,attacker.side).credits+=prize;
+        log(g,'War Profiteering: Gao Hai collects '+prize+' credits.',gao.side);
+        break;
+      }
+      if(v.cmd && attacker.cmd==='zhaohao'){
+        for(const eunuch of g.units){
+          if(eunuch.hp<=0||eunuch.side!==attacker.side||!HIGH_EUNUCHS.has(eunuch.cmd)||
+             dist(g,eunuch,attacker)>3)continue;
+          eunuch.expEunuchMovePending=(eunuch.expEunuchMovePending||0)+1;
+        }
+        log(g,'Imperial Executioner: nearby High Eunuchs gain movement next turn.',attacker.side);
+      }
+    }
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
         unitSide:v.side,commander:v.cmd||null,personal:!!v.personal,byCombat:!!attacker||!!by,
@@ -965,6 +985,8 @@
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
     if(a.cmd==='meiling')a.expMeilingShotsThisTurn=(a.expMeilingShotsThisTurn||0)+1;
+    if(HIGH_EUNUCHS.has(a.cmd))a.expEunuchShotsThisTurn=(a.expEunuchShotsThisTurn||0)+1;
+    if(!johanneRedirect && a.cmd==='zhaohao' && d?.cmd)lowerMorale(g,d,1);
     if(a.expMaskFalls?.attackReady)a.expMaskFalls.attackReady=false;
     honorAction(g, a, 'combats');
     a.moved = true;
@@ -1044,16 +1066,16 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!(a.cmd==='meiling'&&a.expMeilingFinalStand)&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!eunuchHas(g,a,'huangqian')&&!(a.cmd==='meiling'&&a.expMeilingFinalStand)&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (!johanneRedirect && a.hp > 0 && d && d.hp > 0 &&
         !(a.cmd==='meiling'&&a.expMeilingFinalStand) &&
         d.cmd!=='meiling' && manfrediSuperiority(g,a,d)<2 &&
-        (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+        !eunuchHas(g,a,'huangqian') && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       // Guaranteed critical counterfire uses the same critical multiplier as
       // a normal attacking volley; other defenders keep ordinary counterfire.
-      const counterCritMult = fx(d).guaranteedCrit && !fx(a).critImmune
+      const counterCritMult = fx(d).guaranteedCrit && !fx(a).critImmune && !eunuchHas(g,a,'huangqian')
         ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
           techValue(g, d.side, `${branchOf(d.type)}.critpower`)
         : 1;
@@ -1208,6 +1230,11 @@
     // turn. This is counted independently of kill-based Breakthrough refreshes.
     if(a.cmd==='meiling'&&a.expMeilingFinalStand&&a.hp>0)
       a.attacked=(a.expMeilingShotsThisTurn||0)>=2;
+    // Shared Imperial Mobilization grants each affected High Eunuch two
+    // initiated volleys per turn, without granting extra moves or bypassing
+    // the normal non-Eunuch attack limits.
+    if(a.hp>0 && eunuchHas(g,a,'xiawang') && (a.expEunuchShotsThisTurn||0)<2)
+      a.attacked=false;
     // Banked Last Promise attacks are earned IN ADDITION to an ordinary
     // attack and do not bypass commander skill cooldowns or kill-chain caps.
     if(a.hp>0&&a.expToruExtraAttack>0&&a.attacked){
