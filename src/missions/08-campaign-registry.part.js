@@ -353,6 +353,12 @@
         ['bk', 'sutherland', 13, 7, 3], ['bk', 'sutherland', 13, 11, 3],
         ['bk', 'sutherland', 10, 13, 3]],
     },
+    bk_yokosuka: {
+      commanders: [{ name: 'zero', hold: 2 }],
+      troops: [['bk', 'burai_kai', 11, 6, 2],
+        ['bk', 'burai_kai', 12, 6, 2],
+        ['bk', 'burai_kai', 14, 7, 2]],
+    },
     br_execution: {
       tiers: [['G-1 Base', 3]],
       troops: [['britannia', 'vincent_ward', 15, 6, 3],
