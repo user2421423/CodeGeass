@@ -341,6 +341,65 @@
     xianglinEscort[6] = { ...(xianglinEscort[6] || {}), hold: 2 };
   }
 
+  // Seeded normal-difficulty AI playtests found six residual opening defeats.
+  // Use only existing ordinary frame types and keep every named commander
+  // mortal. These mission-specific opening forces establish a credible
+  // defensive line without changing the story's named cast.
+  const STORY_TESTED_OPENING_ADJUSTMENTS = {
+    bk1: {
+      commanders: [{ name: 'zero', hold: 3 }],
+      troops: [[ 'bk', 'sutherland', 10, 7, 3 ],
+        ['bk', 'sutherland', 12, 8, 3], ['bk', 'sutherland', 12, 11, 3],
+        ['bk', 'sutherland', 13, 7, 3], ['bk', 'sutherland', 13, 11, 3],
+        ['bk', 'sutherland', 10, 13, 3]],
+    },
+    br_execution: {
+      tiers: [['G-1 Base', 3]],
+      troops: [['britannia', 'vincent_ward', 15, 6, 3],
+        ['britannia', 'vincent_ward', 14, 3, 3],
+        ['britannia', 'vincent_ward', 16, 5, 3],
+        ['britannia', 'vincent_ward', 16, 6, 3]],
+    },
+    br_mausoleum: {
+      shields: [['Vermillion Forbidden City', 4000]],
+      troops: [['britannia', 'vincent_ward', 15, 6, 3],
+        ['britannia', 'vincent_ward', 14, 3, 3],
+        ['britannia', 'vincent_ward', 16, 5, 3],
+        ['britannia', 'vincent_ward', 16, 6, 3],
+        ['britannia', 'vincent_ward', 12, 8, 3],
+        ['britannia', 'vincent_ward', 15, 8, 3]],
+      guard: 3,
+    },
+    br11: { commanders: [{ name: 'lelouch', position: [17, 13], hold: 2 }] },
+    cf5: { commanders: [{ name: 'xingke', position: [28, 9], hold: 2 }] },
+    eb_slonim: { commanders: [{ name: 'ashley', position: [14, 6], hold: 2 }] },
+  };
+  for (const m of allStoryMissions) {
+    const tune = STORY_TESTED_OPENING_ADJUSTMENTS[m.id];
+    if (!tune) continue;
+    for (const change of tune.commanders || []) {
+      const unit = m.units.find(u => u[5] === change.name &&
+        !u[6]?.skipNormal);
+      if (!unit) continue;
+      if (change.position) {
+        unit[2] = change.position[0];
+        unit[3] = change.position[1];
+      }
+      unit[6] = { ...(unit[6] || {}), hold: change.hold };
+    }
+    for (const [name, tier] of tune.tiers || []) {
+      const city = m.cities.find(c => c[0] === name);
+      if (city) city[4] = tier;
+    }
+    for (const [name, shield] of tune.shields || []) {
+      const city = m.cities.find(c => c[0] === name);
+      if (city) city[5] = { ...(city[5] || {}), normalShield: shield };
+    }
+    for (const troop of tune.troops || [])
+      m.units.push([...troop, null,
+        tune.guard == null ? {} : { hold: tune.guard }]);
+  }
+
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
