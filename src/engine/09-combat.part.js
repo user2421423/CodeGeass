@@ -397,7 +397,8 @@
       1,
     );
     const counterAllowed = counter || senbaReaction ||
-      (!!d && d.cmd==='meiling' && d.expMeilingFinalStand && d.hp>0 &&
+      (!!d && !meilingAwakenedAttack && d.cmd==='meiling' &&
+        d.expMeilingFinalStand && d.hp>0 &&
         !atSea(g,d) && !d.expRoloFrozen && !d.expCharlesMemoryRewrite &&
         d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a));
     // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
@@ -586,7 +587,9 @@
        meiling.cmd!=='meiling'||meiling.hp<=0||!attacker||attacker.hp<=0||
        !foe(g,meiling.side,attacker.side)||atSea(g,meiling)||
        meiling.expRoloFrozen||meiling.expCharlesMemoryRewrite||
-       meiling.morale<=-3||!inRange(meiling,attacker,g)||
+       meiling.morale<=-3||
+       (attacker.cmd==='meiling'&&attacker.expMeilingFinalStand)||
+       !inRange(meiling,attacker,g)||
        !hostileTarget(g,meiling,attacker))return 0;
     let total=0;
     meilingRetaliationGuard.add(g);
@@ -653,6 +656,7 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null, incomingDamage = 0) {
     if (v.hp > 0) return;
+    const firstConfirmedDeath=!v.warCounted;
     // Other attack paths may damage HP without using smilasDealCombatDamage.
     if(!force){meilingAwaken(g,v);if(meilingLethalSave(g,v,attacker))return;}
     // Marianne's Awakening: Anya survives an otherwise fatal hit at full HP.
@@ -776,7 +780,8 @@
           honorAction(g, attacker, 'commanderDefeats');
           award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
           // Only a confirmed enemy COMMANDER kill heals Meiling.
-          if(attacker.cmd==='meiling' && attacker.hp>0 &&
+          if(attacker.cmd==='meiling' && attacker.expMeilingFinalStand &&
+             firstConfirmedDeath && attacker.hp>0 &&
              foe(g,v.side,attacker.side)){
             const heal=Math.max(1,Math.round(maxHP(attacker)*.10));
             const before=attacker.hp;
