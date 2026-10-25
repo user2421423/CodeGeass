@@ -276,6 +276,45 @@
     }
   }
 
+
+  // Targeted escort formations, chosen from the equipment already present in
+  // these battles. The officers retain their real HP and can still be killed.
+  // Commanders are ordered to guard only when the mission is defensive; doing
+  // this for offensive missions caused them to stall before the deadline.
+  const STORY_COMMANDER_ESCORTS = {
+    bk3: { cmd: 'zero', hold: 2 },
+    cf3: { cmd: 'xingke', hold: 2 },
+    cf6: { cmd: 'xingke' },
+    eu_ambush: { cmd: 'akito' },
+    eu_slonim: { cmd: 'leila' },
+    eb_ark: { cmd: 'ashley' },
+  };
+  for (const m of allStoryMissions) {
+    const settings = STORY_COMMANDER_ESCORTS[m.id];
+    if (!settings) continue;
+    const leader = m.units.find(u => u[5] === settings.cmd);
+    if (!leader) continue;
+    if (settings.hold != null)
+      leader[6] = { ...(leader[6] || {}), hold: settings.hold };
+    const model = m.units.find(u => u[0] === leader[0] &&
+      u[5] !== settings.cmd && !String(u[1]).startsWith('elite_') &&
+      !u[6]?.cargo && !u[6]?.skipNormal) || leader;
+    const occupied = new Set(m.units.map(u => u[2] + ',' + u[3]));
+    const safe = [];
+    for (let dc = -2; dc <= 2; dc++) for (let dr = -2; dr <= 2; dr++) {
+      const c = leader[2] + dc, r = leader[3] + dr,
+        code = m.map[r]?.[c];
+      if (!code || code === '.' || code === 'x' ||
+          occupied.has(c + ',' + r)) continue;
+      safe.push({ c, r, d: Math.abs(dc) + Math.abs(dr) });
+    }
+    safe.sort((a, b) => a.d - b.d);
+    for (const pos of safe.slice(0, 4)) {
+      occupied.add(pos.c + ',' + pos.r);
+      m.units.push([leader[0], model[1], pos.c, pos.r, 2, null, { hold: 3 }]);
+    }
+  }
+
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
