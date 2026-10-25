@@ -315,6 +315,17 @@
     }
   }
 
+  // Xianglin's role in the Fuji evacuation is to hold the rear and keep the
+  // surviving contingent together, not race ahead into the eruption corridor.
+  // This keeps her vulnerable but avoids deterministic early commander losses.
+  const fujiEscape = allStoryMissions.find(m => m.id === 'ufn7');
+  const xianglinEscort = fujiEscape?.units.find(u => u[5] === 'xianglin');
+  if (xianglinEscort) {
+    xianglinEscort[2] = 1;
+    xianglinEscort[3] = 3;
+    xianglinEscort[6] = { ...(xianglinEscort[6] || {}), hold: 2 };
+  }
+
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
