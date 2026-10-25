@@ -226,6 +226,23 @@ function mapAtlasCanvasSet(layer) {
   return layer === 'static' ? mapAtlasStaticTiles :
     layer === 'political' ? mapAtlasPoliticalTiles : mapAtlasTiles;
 }
+// Brazil now uses a tighter section of its original 176x144 coastline grid.
+ // Crop the existing pre-rendered WebP at the *same source hex boundaries* as
+ // the live terrain. Otherwise the old full-extent bitmap and its coastline
+ // slide out of alignment while the strategic detail tiles are loading.
+function brazilBackdropForGrid(img) {
+  if (game.scenario?.id !== 'invasion-brazil' ||
+      game.cols !== 154 || game.rows !== 134) return img;
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  const sourceW = 176 + 0.6, sourceH = 1.5 * (144 - 1) + 2;
+  const image = document.createElement('canvas');
+  image.width = Math.max(1, Math.round(w * (154 + 0.6) / sourceW));
+  image.height = Math.max(1, Math.round(h * (1.5 * (134 - 1) + 2) / sourceH));
+  image.getContext('2d').drawImage(img, w * 20 / sourceW, h * (1.5 * 8) / sourceH,
+    w * (154 + 0.6) / sourceW, h * (1.5 * (134 - 1) + 2) / sourceH,
+    0, 0, image.width, image.height);
+  return image;
+}
 function updateMapFallback() {
   const id = regionalMapLayers() ? game.scenario.id : null;
   if (mapAtlasFallback.id === id) return;
@@ -234,7 +251,7 @@ function updateMapFallback() {
   const sourceId = id;
   const notify = (img, hires) => {
     if (mapAtlasFallback.id !== sourceId || (mapAtlasFallback.hires && !hires)) return;
-    mapAtlasFallback.image = img;
+    mapAtlasFallback.image = brazilBackdropForGrid(img);
     mapAtlasFallback.ready = true;
     mapAtlasFallback.hires = hires;
     // Low-resolution tiles left in the queue are superseded by the bitmap.
@@ -426,12 +443,14 @@ function drawStrategicCurrentOwnership() {
   if (state.tiles !== game.tiles) return false;
   const revision = game.mapRevision || 0;
   const image = mapAtlasFallback.image;
-  if (!image?.naturalWidth || !image?.naturalHeight) return false;
+  const imageWidth = image?.naturalWidth || image?.width;
+  const imageHeight = image?.naturalHeight || image?.height;
+  if (!imageWidth || !imageHeight) return false;
   if (state.revision !== revision || state.source !== image || !state.canvas) {
     // This canvas is built only when ownership or the backdrop changes, never
     // while panning or on every frame. Cap its resolution for large theatres.
     const quality = Math.max(0.25, Math.min(0.75,
-      image.naturalWidth / WORLD_W, image.naturalHeight / WORLD_H));
+      imageWidth / WORLD_W, imageHeight / WORLD_H));
     const canvas = state.canvas || document.createElement('canvas');
     canvas.width = Math.ceil(WORLD_W * quality);
     canvas.height = Math.ceil(WORLD_H * quality);
