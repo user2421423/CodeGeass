@@ -1126,7 +1126,7 @@
     }
     // No reactive supporting fire against an Estrella Barrage: its primary
     // and adjacent victims cannot answer with retaliation of any kind.
-    if(d && !johanneRedirect && !f.estrellaBarrage)newcomerSupport(g,d,a);
+    if(d && !johanneRedirect && !f.estrellaBarrage && !eunuchHas(g,a,'huangqian'))newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
