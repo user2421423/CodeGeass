@@ -70,6 +70,9 @@
     // Yukiya's electronic disruption weakens all attacks (including counterfire)
     // only during the victim's next activation.
     if (u.expYukiyaElectronicActive) attack *= 0.75;
+    if (eunuchHas(g,u,'zhaohao')) attack *= 1.30;
+    if (g.units.some(v=>v.hp>0&&foe(g,v.side,u.side)&&v.cmd==='chengzhong'&&dist(g,v,u)<=2)) attack *= 0.75;
+    if (!counter && u.cmd==='zhaohao' && target?.cmd && target.hp < maxHP(target)*0.5) attack *= 1.50;
     if(!counter&&u.forcedOffensive)attack*=1.35;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
@@ -297,6 +300,9 @@
       if (tf.highMoraleTaken && target.morale >= 1) attack *= tf.highMoraleTaken;
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
+      if (eunuchHas(g,target,'gaohai')) attack *= 0.80;
+      if (g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='chengzhong'&&dist(g,v,target)<=1)) attack *= 1.30;
+      if (target.cmd==='huangqian'&&stationAt(g,target)?.owner===target.side) attack *= 0.80;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
       // Oscar passively protects other allies within two hexes of himself.
       // His marked ally instead receives 20% protection even after moving away.
@@ -338,7 +344,7 @@
         (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     // Demolition Expert boosts direct hits on any enemy stationed in a city, even if its shield is down.
-    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1)) : 0;
+    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1) + (a.cmd==='zhaohao' && d.cmd ? d.hp*0.10 : 0)) : 0;
     const smilasPreview = d ? smilasDamageShare(g,d,fullUnitDmg) : null;
     const unitDmg = smilasPreview ? smilasPreview.primary : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -368,7 +374,7 @@
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter = !meilingAwakenedAttack && ((!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
       !a.expFernandoOverloadStrike &&
-      !f.noCounterAttack &&
+      !f.noCounterAttack && !eunuchHas(g,a,'huangqian') &&
       !followUp &&
       !xianglinOpening &&
       !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
@@ -386,7 +392,7 @@
       hostileTarget(g, d, a));
     const crit = f.guaranteedCrit ? 1 : clamp(
       t.crit +
-        (f.crit || 0) +
+        (f.crit || 0) + (eunuchHas(g,a,'zhaohao') ? 0.20 : 0) +
          (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
         (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
@@ -396,15 +402,15 @@
       0,
       1,
     );
-    const counterAllowed = counter || senbaReaction ||
+    const counterAllowed = !eunuchHas(g,a,'huangqian') && (counter || senbaReaction ||
       (!!d && !meilingAwakenedAttack && d.cmd==='meiling' &&
         d.expMeilingFinalStand && d.hp>0 &&
         !atSea(g,d) && !d.expRoloFrozen && !d.expCharlesMemoryRewrite &&
-        d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a));
+        d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a)));
     // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
     // Ordinary commanders' counterfire remains non-critical.
     const counterCritMult = d && fx(d).guaranteedCrit &&
-      !fx(a).critImmune && !(a.cmd==='meiling'&&a.expMeilingFinalStand)
+      !fx(a).critImmune && !eunuchHas(g,a,'huangqian') && !(a.cmd==='meiling'&&a.expMeilingFinalStand)
       ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
         techValue(g, d.side, `${branchOf(d.type)}.critpower`)
       : 1;
@@ -426,7 +432,7 @@
       counter: counterDamage + counterReflection,
       counterAllowed,
       // A critical hit cannot land on an immune defending formation.
-      crit: d && (fx(d).critImmune || d.cmd==='meiling'&&d.expMeilingFinalStand) ? 0 : crit,
+      crit: d && (fx(d).critImmune || eunuchHas(g,d,'huangqian') || d.cmd==='meiling'&&d.expMeilingFinalStand) ? 0 : crit,
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
@@ -926,7 +932,7 @@
       // A persistent Johanne ward redirects the entire first initiating
       // strike. It does not grant the remote bodyguard free counterfire.
       johanneRedirect = !!johanneBodyguard(g,d,a),
-      crit = !(d && (fx(d).critImmune||d.cmd==='meiling'&&d.expMeilingFinalStand)) && random(g) < pr.crit,
+      crit = !(d && (fx(d).critImmune||eunuchHas(g,d,'huangqian')||d.cmd==='meiling'&&d.expMeilingFinalStand)) && random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
