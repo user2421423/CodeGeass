@@ -370,7 +370,7 @@
     }
     if (action.kind === 'maskFalls') {
       if(u.side!==g.player)return {ok:false,reason:'The AI cannot use The Mask Falls'};
-      const cost=Math.min(Math.max(0,u.hp-1),Math.round(maxHP(u)*0.8));
+      const cost=Math.min(Math.max(0,u.hp-1),Math.round(maxHP(u)*0.6));
       u.hp-=cost;u.moved=true;u.attacked=true;
       for(const v of options){
         if(v.id!==u.id){
