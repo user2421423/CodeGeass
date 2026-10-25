@@ -203,7 +203,7 @@
       if (infantry && TYPES[infantry]?.branch === 'Infantry') {
         let raised = 0;
         for (const hex of adjacent(g,xia)) {
-          if (isSea(hex) || !TERRAIN[hex.terrain] || unitAt(g,hex) || stationAt(g,hex)) continue;
+          if (isSea(hex) || !TERRAIN[hex.terrain] || TERRAIN[hex.terrain].blocked || unitAt(g,hex) || stationAt(g,hex)) continue;
           newUnit(g,infantry,side,hex.c,hex.r,1,null,false);
           raised++;
         }
