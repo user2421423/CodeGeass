@@ -209,10 +209,20 @@
   ];
   for (const m of allStoryMissions) {
     m.minimumVictoryTurn = STORY_MINIMUM_VICTORY_TURN;
+    const initialShortHold = (Array.isArray(m.win) ? m.win : [m.win])
+      .find(c => c?.hold && c.hold < 13)?.hold;
     const shortHold = condition =>
       condition?.hold && condition.hold < 13
         ? { ...condition, hold: 16 } : condition;
     m.win = Array.isArray(m.win) ? m.win.map(shortHold) : shortHold(m.win);
+    if (initialShortHold && typeof m.objective === 'string') {
+      const oldTurn = new RegExp('\\bturn\\s+' + initialShortHold + '\\b', 'gi');
+      m.objective = m.objective.replace(oldTurn, 'turn 16');
+      m.events = (m.events || []).map(e => ({
+        ...e,
+        note: typeof e.note === 'string' ? e.note.replace(oldTurn, 'turn 16') : e.note,
+      }));
+    }
     // Normal-only override must not secretly restore an earlier victory.
     if (Number.isFinite(m.normalHold) && m.normalHold < 13) m.normalHold = 16;
     if (m.lose?.turns && m.lose.turns < 20)
