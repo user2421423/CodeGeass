@@ -333,7 +333,7 @@
   // Lowest morale a unit can be pushed to: Leila and Fernando hold Neutral.
   // Other commander floors and morale protections retain their existing rules.
   function moraleFloor(g, v) {
-    if (leilaCommand(g, v) || starOfMadridNear(g, v)) return 0;
+    if (eunuchHas(g,v,'huangqian') || leilaCommand(g, v) || starOfMadridNear(g, v)) return 0;
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
       m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=3) || (fx(m).commanderlessAttack && !v.cmd)) && dist(g, m, v) <= (fx(m).nationalUnity ? 3 : 2),
