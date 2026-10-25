@@ -370,22 +370,30 @@
     }
     if (action.kind === 'maskFalls') {
       if(u.side!==g.player)return {ok:false,reason:'The AI cannot use The Mask Falls'};
-      const cost=Math.min(Math.max(0,u.hp-1),Math.round(maxHP(u)*0.6));
-      u.hp-=cost;u.moved=true;u.attacked=true;
+      // Pay half of MAX HP without a survival floor; a wounded Lelouch can die.
+      const cost=Math.round(maxHP(u)*0.5);
+      u.hp=Math.max(0,u.hp-cost);
+      const selfDestructed=u.hp<=0;
+      u.moved=true;u.attacked=true;
+      let affected=0;
       for(const v of options){
+        if(v.hp<=0)continue;
+        affected++;
         if(v.id!==u.id){
           v.moved=false;v.attacked=false;v.chain=0;v.moveActionsThisTurn=0;
           v.movedDistance=0;v.skillReposition=0;v.eliteMoveAfterKill=false;
           delete v.expKallenReposition;
         }
-        // Death rally takes precedence only for units without an active Mask buff.
-        if(!v.expDeathEmperor){
+        // Fatal Mask Falls uses Lelouch's death rally, never both buffs.
+        if(!selfDestructed&&!v.expDeathEmperor){
           v.expMaskFalls={side:u.side,source:u.id,attackReady:true};
         }
       }
       u.feintCD=0;u.feintUsedTurn=g.turn;
-      log(g,'The Mask Falls: Lelouch sacrifices '+cost+' HP to rally '+options.length+' formations.',u.side);
-      return {ok:true,affected:options.length,cost};
+      log(g,'The Mask Falls: Lelouch sacrifices '+cost+' HP to rally '+affected+' formations.',u.side);
+      if(selfDestructed)kill(g,u,null,true);
+      checkVictory(g);
+      return {ok:true,affected,cost,selfDestructed};
     }
     if(action.kind==='miguelSupply'){
       const v=targetId==null?[...options].sort((a,b)=>Number(!!b.cmd)-Number(!!a.cmd)||b.hp-a.hp||a.id-b.id)[0]

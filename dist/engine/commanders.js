@@ -855,9 +855,9 @@
       hull: 'Shinkirō',
       title: '99th Emperor of Britannia',
       skill: 'Unbreakable Imperial Army / All Hail Lelouch / Zero Requiem',
-      desc: "Passive: at the start of each turn Lelouch and allies within 2 hexes gain High morale floor, 25% damage reduction and +2 movement until their next turn. Allied kills within 3 hexes heal nearby allies 5% max HP. The Mask Falls: once per turn sacrifice up to 60% max HP (minimum 1 HP), consume Lelouch's actions, refresh nearby allies and grant +50% next-attack damage and 40% damage reduction. On death, nearby allies rally for two turns with +50% damage, 25% damage reduction, High morale and refreshed actions. Mask Falls and death rally do not stack.",
+      desc: "Passive: at the start of each turn Lelouch and allies within 2 hexes gain High morale floor, 25% damage reduction and +2 movement until their next turn. Allied kills within 3 hexes heal nearby allies 5% max HP. The Mask Falls: once per turn sacrifice 50% max HP (can kill Lelouch), consume Lelouch's actions, refresh nearby allies and grant +50% next-attack damage and 40% damage reduction. On death, nearby allies rally for two turns with +50% damage, 25% damage reduction, High morale and refreshed actions. Mask Falls and death rally do not stack.",
       fx: {},
-      action: {name:'The Mask Falls',verb:'The Mask Falls',kind:'maskFalls',cooldown:0,desc:'Player only: sacrifice 60% max HP (minimum 1), consume actions, refresh allies within 3 hexes and grant +50% next attack and 40% incoming damage reduction.'},
+      action: {name:'The Mask Falls',verb:'The Mask Falls',kind:'maskFalls',cooldown:0,desc:'Player only: sacrifice 50% max HP (can kill Lelouch), consume actions, refresh allies within 3 hexes and grant +50% next attack and 40% incoming damage reduction.'},
       campaign: true,
     },
     marianne: {
