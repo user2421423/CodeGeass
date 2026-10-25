@@ -545,7 +545,7 @@
       // Confused is the existing -3 morale state. Remember the previous
       // morale so this single-turn rewrite does not cause lasting penalties.
       v.expCharlesMemoryRewrite = { source: u.id, previousMorale: v.morale };
-      v.morale = -3;
+      if (!eunuchHas(g,v,'huangqian')) v.morale = -3;
       u.feintCD = action.cooldown ?? 3;
       u.feintUsedTurn = g.turn;
       log(g, `Charles rewrites the memories of ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short}: Confused until its next turn ends.`, u.side);

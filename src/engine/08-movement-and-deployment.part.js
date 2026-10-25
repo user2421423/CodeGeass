@@ -71,6 +71,8 @@
     if(u.expJammedActive)n=Math.max(1,n-2);
     if (u.expYukiyaElectronicActive) n = Math.max(1, n - 2);
     n += f.move || 0;
+    if (eunuchHas(g,u,'xiawang')) n += 2;
+    n += u.expEunuchMoveActive || 0;
     if (u.expImperialCommand) n += 2;
     // Banked first-strike movement adds to a later full movement action.
     // An immediate postattack reposition instead spends from the bank itself.
@@ -232,7 +234,8 @@
         (eliteFx(u).range || 0) +
         (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
         (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0) + (u.expNavalRelay ? 1 : 0) +
-        (u.cmd === 'norland' && u.expNorlandTitan ? 1 : 0), // Foulbout Titan Mode extends all eligible weapons by one hex.
+        (u.cmd === 'norland' && u.expNorlandTitan ? 1 : 0) +
+        (g && eunuchHas(g,u,'chengzhong') ? 1 : 0), // Foulbout Titan Mode extends all eligible weapons by one hex.
     };
   }
   function inRange(a, p, g) {
@@ -371,7 +374,7 @@
       !canCapture(u) || s.shield > 0)
       return { captured: null, annexed: null };
     const loser = s.owner;
-    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
+
     delete s.expSupplyBlocked;delete s.expDecree;delete s.expShieldRegenBlocked;delete s.expYoshidaBreak;
     s.owner = u.side;
     recordWarEvent(g,'cityCaptured',u.side,{cityId:s.id,city:s.name,previousOwner:loser,
@@ -387,6 +390,11 @@
     // Shields recover normally on the new owner's subsequent turn.
     s.shield = 0;
     claim(g, s, u.side);
+    if (u.cmd==='gaohai') {
+      const bonus=Math.max(0,Math.round(income(g,u.side).credits));
+      funds(g,u.side).credits += bonus;
+      log(g,'Spoils of Conquest: Gao Hai claims '+bonus+' credits.',u.side);
+    }
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
     // Fernando must personally capture the city. This passive triggers once
     // per faction turn, regardless of how many captures he chains.

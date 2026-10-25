@@ -70,6 +70,9 @@
     // Yukiya's electronic disruption weakens all attacks (including counterfire)
     // only during the victim's next activation.
     if (u.expYukiyaElectronicActive) attack *= 0.75;
+    if (eunuchHas(g,u,'zhaohao')) attack *= 1.30;
+    if (g.units.some(v=>v.hp>0&&foe(g,v.side,u.side)&&v.cmd==='chengzhong'&&dist(g,v,u)<=2)) attack *= 0.75;
+    if (!counter && u.cmd==='zhaohao' && target?.cmd && target.hp < maxHP(target)*0.5) attack *= 1.50;
     if(!counter&&u.forcedOffensive)attack*=1.35;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
@@ -297,6 +300,9 @@
       if (tf.highMoraleTaken && target.morale >= 1) attack *= tf.highMoraleTaken;
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
+      if (eunuchHas(g,target,'gaohai')) attack *= 0.80;
+      if (g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='chengzhong'&&dist(g,v,target)<=1)) attack *= 1.30;
+      if (target.cmd==='huangqian'&&stationAt(g,target)?.owner===target.side) attack *= 0.80;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
       // Oscar passively protects other allies within two hexes of himself.
       // His marked ally instead receives 20% protection even after moving away.
@@ -338,7 +344,7 @@
         (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     // Demolition Expert boosts direct hits on any enemy stationed in a city, even if its shield is down.
-    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1)) : 0;
+    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1) + (a.cmd==='zhaohao' && d.cmd ? d.hp*0.10 : 0)) : 0;
     const smilasPreview = d ? smilasDamageShare(g,d,fullUnitDmg) : null;
     const unitDmg = smilasPreview ? smilasPreview.primary : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -364,11 +370,11 @@
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const meilingAwakenedAttack = a.cmd==='meiling' && !!a.expMeilingFinalStand;
-    const senbaReaction=!!d&&!meilingAwakenedAttack&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!eunuchHas(g,a,'huangqian')&&!meilingAwakenedAttack&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter = !meilingAwakenedAttack && ((!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
       !a.expFernandoOverloadStrike &&
-      !f.noCounterAttack &&
+      !f.noCounterAttack && !eunuchHas(g,a,'huangqian') &&
       !followUp &&
       !xianglinOpening &&
       !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
@@ -386,7 +392,7 @@
       hostileTarget(g, d, a));
     const crit = f.guaranteedCrit ? 1 : clamp(
       t.crit +
-        (f.crit || 0) +
+        (f.crit || 0) + (eunuchHas(g,a,'zhaohao') ? 0.20 : 0) +
          (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
         (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
@@ -396,23 +402,23 @@
       0,
       1,
     );
-    const counterAllowed = counter || senbaReaction ||
+    const counterAllowed = !eunuchHas(g,a,'huangqian') && (counter || senbaReaction ||
       (!!d && !meilingAwakenedAttack && d.cmd==='meiling' &&
         d.expMeilingFinalStand && d.hp>0 &&
         !atSea(g,d) && !d.expRoloFrozen && !d.expCharlesMemoryRewrite &&
-        d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a));
+        d.morale>-3 && inRange(d,a,g) && hostileTarget(g,d,a)));
     // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
     // Ordinary commanders' counterfire remains non-critical.
     const counterCritMult = d && fx(d).guaranteedCrit &&
-      !fx(a).critImmune && !(a.cmd==='meiling'&&a.expMeilingFinalStand)
+      !fx(a).critImmune && !eunuchHas(g,a,'huangqian') && !(a.cmd==='meiling'&&a.expMeilingFinalStand)
       ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
         techValue(g, d.side, `${branchOf(d.type)}.critpower`)
       : 1;
-    const counterDamage = (d?.cmd==='meiling' && d.expMeilingFinalStand && counterAllowed
+    const counterDamage = counterAllowed && (d?.cmd==='meiling' && d.expMeilingFinalStand && counterAllowed
       ? 2*Math.round(power(g,d,a,stationAt(g,a),true)/.65)
       : senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
       : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
-      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult;
+      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult || 0;
     // Preview the approximate 5% reflection; the actual volley uses HP lost
     // after damage rolls and interception, and reflects only if Xingke survives.
     const counterReflection = counterAllowed && d.hp > unitDmg && fx(d).counterReflect
@@ -426,7 +432,7 @@
       counter: counterDamage + counterReflection,
       counterAllowed,
       // A critical hit cannot land on an immune defending formation.
-      crit: d && (fx(d).critImmune || d.cmd==='meiling'&&d.expMeilingFinalStand) ? 0 : crit,
+      crit: d && (fx(d).critImmune || eunuchHas(g,d,'huangqian') || d.cmd==='meiling'&&d.expMeilingFinalStand) ? 0 : crit,
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
@@ -585,6 +591,7 @@
   function meilingDoubleRetaliation(g,meiling,attacker){
     if(meilingRetaliationGuard.has(g)||!meiling?.expMeilingFinalStand||
        meiling.cmd!=='meiling'||meiling.hp<=0||!attacker||attacker.hp<=0||
+       eunuchHas(g,attacker,'huangqian')||
        !foe(g,meiling.side,attacker.side)||atSea(g,meiling)||
        meiling.expRoloFrozen||meiling.expCharlesMemoryRewrite||
        meiling.morale<=-3||
@@ -751,6 +758,26 @@
       if (attacker.hp <= 0) kill(g,attacker,null,false,v.side,0);
     }
     dropCarriedEliminator(g, v, 'carrier destroyed');
+    if(!v.warCounted && !force && attacker && foe(g,v.side,attacker.side)) {
+      for(const gao of g.units){
+        if(gao.hp<=0||gao.cmd!=='gaohai'||gao.side!==attacker.side||atSea(g,gao)||
+           dist(g,gao,attacker)>3)continue;
+        if(!g.units.some(e=>e.hp>0&&e.side===gao.side&&e.id!==gao.id&&
+          HIGH_EUNUCHS.has(e.cmd)&&dist(g,e,gao)<=3))continue;
+        const prize=Math.max(0,Math.round(price(v.type,v.stack||1).credits*.25));
+        funds(g,attacker.side).credits+=prize;
+        log(g,'War Profiteering: Gao Hai collects '+prize+' credits.',gao.side);
+        break;
+      }
+      if(v.cmd && attacker.cmd==='zhaohao'){
+        for(const eunuch of g.units){
+          if(eunuch.hp<=0||eunuch.side!==attacker.side||!HIGH_EUNUCHS.has(eunuch.cmd)||
+             dist(g,eunuch,attacker)>3)continue;
+          eunuch.expEunuchMovePending=(eunuch.expEunuchMovePending||0)+1;
+        }
+        log(g,'Imperial Executioner: nearby High Eunuchs gain movement next turn.',attacker.side);
+      }
+    }
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
         unitSide:v.side,commander:v.cmd||null,personal:!!v.personal,byCombat:!!attacker||!!by,
@@ -926,7 +953,7 @@
       // A persistent Johanne ward redirects the entire first initiating
       // strike. It does not grant the remote bodyguard free counterfire.
       johanneRedirect = !!johanneBodyguard(g,d,a),
-      crit = !(d && (fx(d).critImmune||d.cmd==='meiling'&&d.expMeilingFinalStand)) && random(g) < pr.crit,
+      crit = !(d && (fx(d).critImmune||eunuchHas(g,d,'huangqian')||d.cmd==='meiling'&&d.expMeilingFinalStand)) && random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
@@ -959,6 +986,8 @@
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
     if(a.cmd==='meiling')a.expMeilingShotsThisTurn=(a.expMeilingShotsThisTurn||0)+1;
+    if(HIGH_EUNUCHS.has(a.cmd))a.expEunuchShotsThisTurn=(a.expEunuchShotsThisTurn||0)+1;
+    if(!johanneRedirect && a.cmd==='zhaohao' && d?.cmd)lowerMorale(g,d,1);
     if(a.expMaskFalls?.attackReady)a.expMaskFalls.attackReady=false;
     honorAction(g, a, 'combats');
     a.moved = true;
@@ -1038,16 +1067,16 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!(a.cmd==='meiling'&&a.expMeilingFinalStand)&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!eunuchHas(g,a,'huangqian')&&!(a.cmd==='meiling'&&a.expMeilingFinalStand)&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (!johanneRedirect && a.hp > 0 && d && d.hp > 0 &&
         !(a.cmd==='meiling'&&a.expMeilingFinalStand) &&
         d.cmd!=='meiling' && manfrediSuperiority(g,a,d)<2 &&
-        (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+        !eunuchHas(g,a,'huangqian') && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       // Guaranteed critical counterfire uses the same critical multiplier as
       // a normal attacking volley; other defenders keep ordinary counterfire.
-      const counterCritMult = fx(d).guaranteedCrit && !fx(a).critImmune
+      const counterCritMult = fx(d).guaranteedCrit && !fx(a).critImmune && !eunuchHas(g,a,'huangqian')
         ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
           techValue(g, d.side, `${branchOf(d.type)}.critpower`)
         : 1;
@@ -1097,7 +1126,7 @@
     }
     // No reactive supporting fire against an Estrella Barrage: its primary
     // and adjacent victims cannot answer with retaliation of any kind.
-    if(d && !johanneRedirect && !f.estrellaBarrage)newcomerSupport(g,d,a);
+    if(d && !johanneRedirect && !f.estrellaBarrage && !eunuchHas(g,a,'huangqian'))newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
@@ -1202,6 +1231,11 @@
     // turn. This is counted independently of kill-based Breakthrough refreshes.
     if(a.cmd==='meiling'&&a.expMeilingFinalStand&&a.hp>0)
       a.attacked=(a.expMeilingShotsThisTurn||0)>=2;
+    // Shared Imperial Mobilization grants each affected High Eunuch two
+    // initiated volleys per turn, without granting extra moves or bypassing
+    // the normal non-Eunuch attack limits.
+    if(a.hp>0 && eunuchHas(g,a,'xiawang') && (a.expEunuchShotsThisTurn||0)<2)
+      a.attacked=false;
     // Banked Last Promise attacks are earned IN ADDITION to an ordinary
     // attack and do not bypass commander skill cooldowns or kill-chain caps.
     if(a.hp>0&&a.expToruExtraAttack>0&&a.attacked){

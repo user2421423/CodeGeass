@@ -116,6 +116,7 @@
         // Mao's movement debuff expires after this faction's completed turn.
         delete v.expMaoMoveActive;
         delete v.expToruExtraAttack;delete v.expToruExtraMove;
+        delete v.expEunuchMoveActive;
         delete v.expFarneseExtraMove;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
@@ -190,6 +191,26 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
+    // Conscript on Xia Wang's first friendly turn, then every second one.
+    // Empty city hexes and invalid/sea/occupied hexes never receive infantry.
+    for (const xia of mine) {
+      if (xia.cmd !== 'xiawang' || atSea(g,xia)) continue;
+      if (xia.expEunuchConscriptionWait > 0) {
+        xia.expEunuchConscriptionWait--;
+        continue;
+      }
+      const infantry = typeFor(g.scenario?.equipment?.[side] || side,'scout',g);
+      if (infantry && TYPES[infantry]?.branch === 'Infantry') {
+        let raised = 0;
+        for (const hex of adjacent(g,xia)) {
+          if (isSea(hex) || !TERRAIN[hex.terrain] || TERRAIN[hex.terrain].blocked || unitAt(g,hex) || stationAt(g,hex)) continue;
+          newUnit(g,infantry,side,hex.c,hex.r,1,null,false);
+          raised++;
+        }
+        if (raised) log(g,'Mass Conscription: Xia Wang mobilizes '+raised+' infantry formations.',side);
+      }
+      xia.expEunuchConscriptionWait = 1;
+    }
     // Mao reads the intentions of every enemy commander within two hexes.
     // Each target takes one morale hit and one non-stacking movement penalty
     // per Mao faction turn. Moving out of range does not remove that penalty.
@@ -266,6 +287,9 @@
       delete u.expAkitoMoveReady;
       u.moved = false;
       u.attacked = false;
+      if(HIGH_EUNUCHS.has(u.cmd))u.expEunuchShotsThisTurn=0;
+      u.expEunuchMoveActive=u.expEunuchMovePending||0;
+      delete u.expEunuchMovePending;
       if(u.cmd==='meiling'){
         u.expMeilingShotsThisTurn=0;
         meilingAwaken(g,u);
@@ -300,9 +324,11 @@
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(romeroStandFast(g,u) ? 0 : moraleFloor(g,u), desired);
       if (u.morale < desired) u.morale++;
-      else if (u.morale > desired) u.morale--;
-      if (nearby >= 2) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
+      else if (u.morale > desired && !eunuchHas(g,u,'huangqian')) u.morale--;
+      if (nearby >= 2 && !eunuchHas(g,u,'huangqian')) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
       if(u.expImperialCommand||u.expDeathEmperor)u.morale=1;
+      if(eunuchHas(g,u,'huangqian'))u.morale=Math.max(0,u.morale);
+      if(eunuchHas(g,u,'gaohai')&&!eunuchEnemyInterdicted(g,u))u.hp=Math.min(maxHP(u),u.hp+Math.round(maxHP(u)*.10));
       // Anna's Clément Engineering supplies field repairs, not morale recovery.
 
       // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
@@ -310,18 +336,18 @@
         u.morale = Math.min(1, u.morale + 1);
       // Rakshata: field repairs include her own formation and adjacent friendly
       // land units, never ships. Multiple engineers do not stack.
-      if (!u.expMiguelSupply && TYPES[u.type].naval !== 'ship' &&
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && TYPES[u.type].naval !== 'ship' &&
           mine.some(m => m.hp > 0 && fx(m).rakshataEngineering && dist(g, m, u) <= 1))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.10));
       // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
-      if (!u.expMiguelSupply && u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      if (!u.expMiguelSupply && !TYPES[u.type].air && annaMaintenanceNear(g, u))
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && !TYPES[u.type].air && annaMaintenanceNear(g, u))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      if (!u.expMiguelSupply && fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
       const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
       const repairLevel = genericLevel(g, u, repairSkill);
-      if (!u.expMiguelSupply && repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
       const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata', 'ohgi', 'smilas', 'anna', 'ashley'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
@@ -336,7 +362,7 @@
       // City occupancy no longer heals frames by itself. Inoue's separate
       // Resistance Logistics bonus still applies to friendly city garrisons.
       const s = stationAt(g, u);
-      if (!u.expMiguelSupply && s?.owner === side && logisticsNear(g, u))
+      if (!u.expMiguelSupply && !eunuchEnemyInterdicted(g,u) && s?.owner === side && logisticsNear(g, u))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       // Ports supply shipyards, not passive naval healing. Ships must use an explicit
       // repair action (or a separate earned ability) to recover HP.
@@ -346,7 +372,7 @@
       // End-of-turn-start morale recovery and allied rally effects cannot
       // break the one-turn Geass confusion.
       if (u.expCharlesMemoryRewrite) {
-        u.morale = -3;
+        if (!eunuchHas(g,u,'huangqian')) u.morale = -3;
         u.moved = true;
         u.attacked = true;
       }
@@ -356,15 +382,16 @@
     // Shield recovery follows the city's engineering upgrades and Huang Qian's nearby administration aura.
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const normalRegen=cityStats(s)[s.attackedSinceRegen?'attacked':'safe'];
+      const protectedRegen=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3);
+      const normalRegen=cityStats(s)[protectedRegen?'safe':s.attackedSinceRegen?'attacked':'safe'];
       const engineering=techValue(g,side,'cities.engineering');
-      const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.15) : 0;
+      const administrationBonus=mine.some(m=>m.cmd==='huangqian'&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.10) : 0;
       // Incoming fire halves ordinary repair, but Huang Qian still restores
-      // the full additional 15% maximum shields every friendly turn.
+      // the full additional 10% maximum shields every friendly turn.
       const occupant=unitAt(g,s);
       const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
       const gaudefroyRate=occupant?.side===side ? fx(occupant).fortressRegeneration : 0;
-      const recovery=miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
+      const recovery=(!protectedRegen&&(miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side))
         ? 0 : (normalRegen+engineering+administrationBonus)*(gaudefroyRate||1);
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(recovery));

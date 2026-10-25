@@ -96,6 +96,7 @@
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
     if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
+    if (eunuchEnemyInterdicted(g,u)) return 'High Eunuch supply interdiction blocks repairs and reinforcements';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
@@ -114,6 +115,7 @@
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
     if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
+    if (eunuchEnemyInterdicted(g,u)) return 'High Eunuch supply interdiction blocks repairs and reinforcements';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
