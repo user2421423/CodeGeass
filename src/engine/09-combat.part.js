@@ -591,6 +591,7 @@
   function meilingDoubleRetaliation(g,meiling,attacker){
     if(meilingRetaliationGuard.has(g)||!meiling?.expMeilingFinalStand||
        meiling.cmd!=='meiling'||meiling.hp<=0||!attacker||attacker.hp<=0||
+       eunuchHas(g,attacker,'huangqian')||
        !foe(g,meiling.side,attacker.side)||atSea(g,meiling)||
        meiling.expRoloFrozen||meiling.expCharlesMemoryRewrite||
        meiling.morale<=-3||
