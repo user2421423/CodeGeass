@@ -71,6 +71,8 @@
     if(u.expJammedActive)n=Math.max(1,n-2);
     if (u.expYukiyaElectronicActive) n = Math.max(1, n - 2);
     n += f.move || 0;
+    if (eunuchHas(g,u,'xiawang')) n += 2;
+    n += u.expEunuchMoveActive || 0;
     if (u.expImperialCommand) n += 2;
     // Banked first-strike movement adds to a later full movement action.
     // An immediate postattack reposition instead spends from the bank itself.
@@ -388,7 +390,11 @@
     // Shields recover normally on the new owner's subsequent turn.
     s.shield = 0;
     claim(g, s, u.side);
-    if (u.cmd==='gaohai') funds(g,u.side).credits += g.stations.filter(city=>city.owner===u.side).reduce((sum,city)=>sum+cityOutput(g,city).credits,0);
+    if (u.cmd==='gaohai') {
+      const bonus=Math.max(0,Math.round(income(g,u.side).credits));
+      funds(g,u.side).credits += bonus;
+      log(g,'Spoils of Conquest: Gao Hai claims '+bonus+' credits.',u.side);
+    }
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
     // Fernando must personally capture the city. This passive triggers once
     // per faction turn, regardless of how many captures he chains.
