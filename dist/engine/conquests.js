@@ -920,9 +920,9 @@
   // the existing Elite difficulty system is unchanged.
   const CONQUEST_COMMANDER_CLASSES = {
     super: 'suzaku cornelia bismarck schneizel gino jeremiah dorothea nonette lelouch marianne oldrin monica luciano charles julius shin ashley manfredi augustus norland brondello leila akito ryo ayano smilas xingke zidien shalio zero kallen tohdoh cc kaguya'.split(' '),
-    heavy: 'rolo guilford darlton villetta euphemia kewell gaudefroy raymond jeanrowe johanne dore scholtz renelaurent janmanes simonmericourt kuzanmontoban alannecker franzvallo augustahighland oscar klaus fernando pierre olivia romero masaki toru miguel eduardo xianglin cao gaohai zhaohao leifeng meiling lifeng ren xiawang chengzhong sawasaki mao bolvona ohgi chiba asahina senba urabe sugiyama tamaki inoue sayoko benio kinoshita kizuna ayame indira'.split(' '),
+    heavy: 'rolo guilford kewell gaudefroy raymond jeanrowe johanne dore scholtz renelaurent janmanes simonmericourt kuzanmontoban alannecker franzvallo augustahighland oscar klaus fernando pierre olivia romero masaki toru miguel eduardo xianglin cao gaohai zhaohao leifeng meiling lifeng ren xiawang chengzhong sawasaki mao bolvona ohgi chiba asahina senba urabe sugiyama tamaki inoue sayoko benio kinoshita kizuna ayame indira'.split(' '),
     siege: 'anya marrybell lloyd yukiya sarah honggu chaojielun shamna katase savitri'.split(' '),
-    rocket: 'cecile farnese anna marirrosa sophie joe ferilli chloe rakshata tianzi huangqian vritra minami diethard toruyoshida kirihara mutsuki ichijiku'.split(' '),
+    rocket: 'cecile farnese anna marirrosa sophie joe ferilli chloe rakshata tianzi huangqian vritra minami diethard toruyoshida kirihara mutsuki ichijiku villetta darlton euphemia'.split(' '),
   };
 
   // Every eligible roster officer receives one named starting command in each
