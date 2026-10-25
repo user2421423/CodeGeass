@@ -418,10 +418,10 @@
         recordWarEvent(g,'damage',side,{targetSide:v.side,value:v.hp-left,weapon:'F.L.E.I.J.A.'});
         v.hp = left;
         if (ring) {
-          v.morale = moraleFloor(g, v);
+          if (!eunuchHas(g,v,'huangqian')) v.morale = moraleFloor(g, v);
           crippled.push(v.id);
         } else {
-          v.morale = Math.min(v.morale ?? 0, -1);
+          if (!eunuchHas(g,v,'huangqian')) v.morale = Math.min(v.morale ?? 0, -1);
           // Blue Geass also protects against the outer-ring morale shock.
           if (leilaCommand(g, v)) v.morale = Math.max(0, v.morale);
           damaged.push(v.id);
