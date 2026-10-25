@@ -261,7 +261,7 @@
   const api={id:'area-18',title:'The Conquest of Area 18 — Arabian Peninsula',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,coastBuffer:1},
+  api.meta={map:{centreSampled:true,coastBuffer:0},
     elite:true,
     ai:{doctrine:'europe'},saveVersion:5,
     text:{
