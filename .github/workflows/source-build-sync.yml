@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Validate High Eunuch mechanics
+        run: node tools/high_eunuch_rework_smoke.cjs
       - name: Audit every Philippine hex and invasion route
         run: node tools/philippines_hex_audit.cjs
 
