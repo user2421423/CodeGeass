@@ -288,6 +288,11 @@
     eu_ambush: { cmd: 'akito' },
     eu_slonim: { cmd: 'leila' },
     eb_ark: { cmd: 'ashley' },
+    eb_fall: { cmd: 'farnese', guardRadius: 2 },
+    bk_pacific: { cmd: 'zero', guardRadius: 2 },
+    br_shikine: { cmd: 'suzaku', guardRadius: 2 },
+    br_mausoleum: { cmd: 'schneizel', guardRadius: 2 },
+    br_kagoshima: { cmd: 'bismarck', hold: 2, guardRadius: 2 },
   };
   for (const m of allStoryMissions) {
     const settings = STORY_COMMANDER_ESCORTS[m.id];
@@ -311,7 +316,7 @@
     safe.sort((a, b) => a.d - b.d);
     for (const pos of safe.slice(0, 4)) {
       occupied.add(pos.c + ',' + pos.r);
-      m.units.push([leader[0], model[1], pos.c, pos.r, 2, null, { hold: 3 }]);
+      m.units.push([leader[0], model[1], pos.c, pos.r, 2, null, { hold: settings.guardRadius ?? 3 }]);
     }
   }
 
