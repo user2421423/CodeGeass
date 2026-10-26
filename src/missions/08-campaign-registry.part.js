@@ -280,6 +280,23 @@
       });
     }
 
+    if (m.id === 'ufn10') {
+      m.win = [
+        { capture: ['Primary Float System'] },
+        { near: ['Primary Float System'], by: 'xingke', radius: 3 },
+        { hold: 16 },
+      ];
+      m.objective = 'Capture the Primary Float System and bring Xingke within 3 hexes of it; hold the position through turn 16. Xingke must survive. Turn 13 minimum.';
+    }
+    if (m.id === 'ufn12') {
+      m.win = [
+        { capture: ['Bridge'] },
+        { near: ['Representative Assembly'], by: 'xingke', radius: 4 },
+        { hold: 16 },
+      ];
+      m.objective = 'Capture the Bridge and bring Xingke within 4 hexes of Representative Assembly; secure the boarding operation through turn 16. Xingke and Xianglin must survive. Turn 13 minimum.';
+    }
+
     if (!STORY_PHASED_MISSIONS.has(m.id)) continue;
     const ally = side => side === m.player ||
       (m.teams?.[side] && m.teams[side] === m.teams[m.player]);
