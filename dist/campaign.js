@@ -159,6 +159,14 @@
     // Allied captures satisfy coalition objectives without changing city ownership.
     if (c.capture) return c.capture.every(n => friendly(g, cityByName(g, n)?.owner));
     if (c.keep) return c.keep.every(n => !cm.lostCities.includes(n));
+    // Some boarding / flagship objectives need their named officer near the
+    // objective, not occupying a single city hex that might already contain
+    // an allied formation. The distance is measured in actual map hexes.
+    if (c.near) return c.near.every(n => {
+      const city = cityByName(g, n), officer = c.by && unitWith(g, c.by);
+      return city && officer && officer.hp > 0 && friendly(g, officer.side) &&
+        E.distance(officer, city, g) <= (c.radius ?? 1);
+    });
     if (c.reach) return c.reach.every(n => {
       const s = cityByName(g, n);
       return s && g.units.some(u => u.hp > 0 && u.side === g.player && u.c === s.c && u.r === s.r && (!c.by || u.cmd === c.by));
@@ -655,8 +663,9 @@
     // continue fighting. Captured cities still need to remain under control.
     const reached = (g.campaign.reachedObjectives ||= []);
     const objectivesMet = asList(m.win).every(c => {
-      if (!c.reach) return holds(g, c);
-      const key = JSON.stringify(c.reach) + '|' + (c.by || '');
+      const presence = c.reach || c.near;
+      if (!presence) return holds(g, c);
+      const key = JSON.stringify(presence) + '|' + (c.by || '');
       if (holds(g, c)) {
         if (!reached.includes(key)) reached.push(key);
         return true;
